@@ -24,7 +24,7 @@ import OrderedCollections
 /// - ``Value``
 /// - ``Index``
 /// - ``Element``
-public struct SQLiteRow: Collection, CustomStringConvertible {
+public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
     // MARK: - Type Aliases
     
     /// A type for the internal storage of column names and their associated values in a database row.
