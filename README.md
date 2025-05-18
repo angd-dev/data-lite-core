@@ -47,7 +47,7 @@ let package = Package(
         .target(
             name: "YourTarget",
             dependencies: [
-                .product(name: "DataLiteCore", package: "sqlite-swift")
+                .product(name: "DataLiteCore", package: "data-lite-core")
             ]
         )
     ]
