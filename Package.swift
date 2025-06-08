@@ -26,6 +26,9 @@ let package = Package(
             dependencies: [
                 .product(name: "DataLiteC", package: "data-lite-c"),
                 .product(name: "OrderedCollections", package: "swift-collections")
+            ],
+            cSettings: [
+                .define("SQLITE_HAS_CODEC")
             ]
         ),
         .testTarget(
