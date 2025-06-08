@@ -144,8 +144,8 @@ import DataLiteC
 ///
 /// ## Multithreading
 ///
-/// The `Connection` class supports multithreading, but its behavior depends on the selected 
-/// thread-safety mode. You can configure the desired mode using the ``Options`` parameter in the 
+/// The `Connection` class supports multithreading, but its behavior depends on the selected
+/// thread-safety mode. You can configure the desired mode using the ``Options`` parameter in the
 /// ``init(location:options:)`` method.
 ///
 /// **Multi-thread** (``Options/nomutex``): This mode allows SQLite to be used across multiple
@@ -159,7 +159,7 @@ import DataLiteC
 /// )
 /// ```
 ///
-/// **Serialized** (``Options/fullmutex``): In this mode, SQLite uses internal mutexes to ensure 
+/// **Serialized** (``Options/fullmutex``): In this mode, SQLite uses internal mutexes to ensure
 /// thread safety. This allows multiple threads to safely share `Connection` instances and their
 /// derived objects.
 ///
@@ -170,11 +170,64 @@ import DataLiteC
 /// )
 /// ```
 ///
-/// - Important: The `Connection` class does not include built-in synchronization for shared 
-/// resources. Developers must implement custom synchronization mechanisms, such as using 
-/// `DispatchQueue`, when sharing resources across threads.
+/// - Important: The `Connection` class does not include built-in synchronization for shared
+///   resources. Developers must implement custom synchronization mechanisms, such as using
+///   `DispatchQueue`, when sharing resources across threads.
 ///
 /// For more details, see the [Using SQLite in Multi-Threaded Applications](https://www.sqlite.org/threadsafe.html).
+///
+/// ## Encryption
+///
+/// The `Connection` class supports transparent encryption and re-encryption of databases using the
+/// ``apply(_:name:)`` and ``rekey(_:name:)`` methods. This allows sensitive data to be securely
+/// stored on disk.
+///
+/// ### Applying an Encryption Key
+///
+/// To open an encrypted database or encrypt a new one, call ``apply(_:name:)`` immediately after
+/// initializing the connection, and before executing any SQL statements.
+///
+/// ```swift
+/// let connection = try Connection(
+///     path: "~/secure.db",
+///     options: [.readwrite, .create]
+/// )
+/// try connection.apply(Key.passphrase("secret-password"))
+/// ```
+///
+/// - If the database is already encrypted, the key must match the one previously used.
+/// - If the database is unencrypted, applying a key will encrypt it on first write.
+///
+/// You can use either a **passphrase**, which is internally transformed into a key, or a **raw key**:
+///
+/// ```swift
+/// try connection.apply(Key.raw(data: rawKeyData))
+/// ```
+///
+/// - Important: The encryption key must be applied *before* any SQL queries are executed.
+///   Otherwise, the database may remain unencrypted or unreadable.
+///
+/// ### Rekeying the Database
+///
+/// To change the encryption key of an existing database, you must first apply the current key using
+/// ``apply(_:name:)``, then call ``rekey(_:name:)`` with the new key.
+///
+/// ```swift
+/// let connection = try Connection(
+///     path: "~/secure.db",
+///     options: [.readwrite]
+/// )
+/// try connection.apply(Key.passphrase("old-password"))
+/// try connection.rekey(Key.passphrase("new-password"))
+/// ```
+///
+/// - Important: ``rekey(_:name:)`` requires that the correct current key has already been applied
+///   via ``apply(_:name:)``. If the wrong key is used, the operation will fail with an error.
+///
+/// ### Attached Databases
+///
+/// Both ``apply(_:name:)`` and ``rekey(_:name:)`` accept an optional `name` parameter to operate
+/// on an attached database. If omitted, they apply to the main database.
 ///
 /// ## Topics
 ///
@@ -233,6 +286,13 @@ import DataLiteC
 /// - ``beginTransaction(_:)``
 /// - ``commitTransaction()``
 /// - ``rollbackTransaction()``
+///
+/// ### Encryption
+///
+/// - ``apply(_:name:)``
+/// - ``rekey(_:name:)``
+///
+/// - ``Key``
 public final class Connection {
     // MARK: - Private Properties
     
@@ -775,6 +835,63 @@ public final class Connection {
     public func rollbackTransaction() throws {
         let query = "ROLLBACK TRANSACTION"
         try prepare(sql: query).step()
+    }
+    
+    // MARK: - Encryption
+    
+    /// Applies an encryption key to the opened database connection.
+    ///
+    /// This method must be called immediately after opening the database and **before** any SQL
+    /// statements are executed. If the database is already encrypted, the key must match the one used
+    /// during encryption. If the database is unencrypted, the behavior depends on whether the database
+    /// contains any data:
+    ///
+    /// - If the database is empty (e.g. just created), the key will be accepted and encryption will
+    ///   be initialized upon first write.
+    /// - If the database already contains data, applying a key will cause errors when executing SQL
+    ///   statements, because SQLite will attempt to decrypt unencrypted content.
+    ///
+    /// - Important: This method does **not** encrypt an existing unencrypted database. To encrypt a
+    ///   populated unencrypted database, you must perform a manual export (copy) into a new encrypted one.
+    ///
+    /// - Parameters:
+    ///   - key: The encryption key to apply. This can be a passphrase or raw key, depending on how
+    ///     the ``Key`` instance is constructed.
+    ///   - name: The name of the target database (used for attached databases). Defaults to `nil`
+    ///     for the main database.
+    /// - Throws: ``SQLiteError`` if the key application fails.
+    public func apply(_ key: Key, name: String? = nil) throws {
+        let status = if let name {
+            sqlite3_key_v2(connection, name, key.keyValue, key.length)
+        } else {
+            sqlite3_key(connection, key.keyValue, key.length)
+        }
+        if status != SQLITE_OK {
+            throw SQLiteError(connection)
+        }
+    }
+    
+    /// Changes the encryption key of the connected database.
+    ///
+    /// This method re-encrypts the database using a new key. You must first apply the current
+    /// encryption key using ``apply(_:name:)``. If the current key was not applied or is incorrect,
+    /// rekeying will fail.
+    ///
+    /// - Parameters:
+    ///   - key: The new encryption key to use. This can be a passphrase or raw key, depending on how
+    ///     the ``Key`` instance is constructed.
+    ///   - name: The name of the target database (used for attached databases). Defaults to `nil`
+    ///     for the main database.
+    /// - Throws: ``SQLiteError`` if rekeying fails.
+    public func rekey(_ key: Key, name: String? = nil) throws {
+        let status = if let name {
+            sqlite3_rekey_v2(connection, name, key.keyValue, key.length)
+        } else {
+            sqlite3_rekey(connection, key.keyValue, key.length)
+        }
+        if status != SQLITE_OK {
+            throw SQLiteError(connection)
+        }
     }
 }
 
