@@ -38,6 +38,26 @@ final class StatementTests: XCTestCase {
         try super.tearDownWithError()
     }
     
+    func testMixBindings() throws {
+        do {
+            let sql = "INSERT INTO users (name, age) VALUES (?, ?)"
+            let stmt = try Statement(db: connection, sql: sql, options: [])
+            try stmt.bind("Alice", at: 1)
+            try stmt.bind(88, at: 2)
+            XCTAssertFalse(try stmt.step())
+        }
+        
+        do {
+            let sql = "SELECT * FROM users WHERE age = ? AND name = $name"
+            let stmt = try Statement(db: connection, sql: sql, options: [])
+            try stmt.bind(88, at: 1)
+            try stmt.bind("Alice", at: stmt.bind(parameterIndexBy: "$name"))
+            XCTAssertTrue(try stmt.step())
+            XCTAssertEqual(stmt.columnValue(at: 1), "Alice")
+            XCTAssertEqual(stmt.columnValue(at: 2), 88)
+        }
+    }
+    
     func testStatementInitialization() throws {
         let sql = "INSERT INTO users (name, age) VALUES (?, ?)"
         let statement = try Statement(db: connection, sql: sql, options: [.persistent])

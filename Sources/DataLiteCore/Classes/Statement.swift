@@ -128,12 +128,91 @@ let SQLITE_TRANSIENT = unsafeBitCast(
 /// }
 /// ```
 ///
+/// ### Mixing Indexed and Named Parameters
+///
+/// You can mix positional (`?`, `?NNN`) and named (`:name`, `@name`, `$name`) parameters
+/// in a single SQL statement. This is supported by SQLite and allows you to use different parameter
+/// styles simultaneously.
+///
+/// ```swift
+/// do {
+///     let query = """
+///     SELECT * FROM users WHERE age = ? AND name = :name
+///     """
+///     let statement = try connection.prepare(sql: query)
+///     let nameIndex = statement.bind(parameterIndexBy: ":name")
+///
+///     try statement.bind(88, at: 1)
+///     try statement.bind("Alice", at: nameIndex)
+/// } catch {
+///     print("Error binding parameters: \(error)")
+/// }
+/// ```
+///
+/// - Important: Although mixing parameter styles is technically allowed, it is generally not recommended.
+///   For clarity and maintainability, you should consistently use either indexed or named parameters
+///   throughout a query. Mixing styles may lead to confusion or hard-to-diagnose bugs in more complex queries.
+///
+/// ## Generating SQL Using SQLiteRow
+///
+/// The ``SQLiteRow`` type can be used not only for retrieving query results, but also for dynamically
+/// generating SQL statements. Its ordered keys and parameter-friendly formatting make it especially
+/// convenient for constructing `INSERT`, `UPDATE`, and similar queries with named parameters.
+///
+/// ### Inserting a Row
+///
+/// To insert a new row into a table using values from a ``SQLiteRow``, you can use the
+/// ``SQLiteRow/columns`` and ``SQLiteRow/namedParameters`` properties.
+/// This ensures the correct number and order of columns and parameters.
+///
+/// ```swift
+/// var row = SQLiteRow()
+/// row["name"] = .text("Alice")
+/// row["age"] = .int(30)
+/// row["email"] = .text("alice@example.com")
+///
+/// let columns = row.columns.joined(separator: ", ")        // name, age, email
+/// let values = row.namedParameters.joined(separator: ", ") // :name, :age, :email
+///
+/// let sql = "INSERT INTO users (\(columns)) VALUES (\(values))"
+/// let statement = try connection.prepare(sql: sql)
+/// try statement.bind(row)
+/// ```
+///
+/// This approach eliminates the need to manually write parameter placeholders or maintain their order.
+/// It also ensures full compatibility with the ``bind(_:)`` method.
+///
+/// ### Updating a Row
+///
+/// To construct an `UPDATE` statement using a ``SQLiteRow``, you can dynamically
+/// map the column names to SQL assignments in the form `column = :column`.
+///
+/// ```swift
+/// var row = SQLiteRow()
+/// row["id"] = .int(123)
+/// row["name"] = .text("Alice")
+/// row["age"] = .int(30)
+/// row["email"] = .text("alice@example.com")
+///
+/// let assignments = zip(row.columns, row.namedParameters)
+///     .map { "\($0.0) = \($0.1)" }
+///     .joined(separator: ", ")
+///
+/// let sql = "UPDATE users SET \(assignments) WHERE id = :id"
+/// let statement = try connection.prepare(sql: sql)
+/// try statement.bind(row)
+/// try statement.step()
+/// ```
+///
+/// - Important: Ensure the SQLiteRow includes any values used in conditions
+///   (e.g., `:id` in `WHERE`), or binding will fail.
+///
 /// ## Executing an SQL Statement
 ///
 /// The SQL statement is executed using the ``step()`` method. It returns `true` if there is a
 /// result to process, and `false` when execution is complete. To retrieve the results of an SQL
 /// statement, use ``columnCount()``, ``columnType(at:)``, ``columnName(at:)``,
-/// ``columnValue(at:)->SQLiteRawValue``, and ``rowValue()``.
+/// ``columnValue(at:)->SQLiteRawValue``, and ``currentRow()``.
 ///
 /// ```swift
 /// do {
@@ -183,6 +262,7 @@ let SQLITE_TRANSIENT = unsafeBitCast(
 /// ### Subtypes
 ///
 /// - ``Options``
+/// - ``Arguments``
 ///
 /// ### Binding Parameters
 ///
@@ -191,6 +271,8 @@ let SQLITE_TRANSIENT = unsafeBitCast(
 /// - ``bind(parameterNameBy:)``
 /// - ``bind(_:at:)-(SQLiteRawValue,_)``
 /// - ``bind(_:at:)-(T?,_)``
+/// - ``bind(_:)-(SQLiteRow)``
+/// - ``bind(_:)-(Arguments)``
 /// - ``clearBindings()``
 ///
 /// ### Getting Results
@@ -200,12 +282,14 @@ let SQLITE_TRANSIENT = unsafeBitCast(
 /// - ``columnName(at:)``
 /// - ``columnValue(at:)->SQLiteRawValue``
 /// - ``columnValue(at:)->T?``
-/// - ``rowValue()``
+/// - ``currentRow()``
 ///
 /// ### Evaluating
 ///
 /// - ``step()``
 /// - ``reset()``
+/// - ``execute(rows:)``
+/// - ``execute(args:)``
 ///
 /// ### Hashing
 ///
@@ -325,6 +409,41 @@ public final class Statement: Equatable, Hashable {
         try bind(value?.sqliteRawValue ?? .null, at: index)
     }
     
+    /// Binds all values from a `SQLiteRow` to their corresponding named parameters in the statement.
+    ///
+    /// This method iterates through each key-value pair in the given `SQLiteRow` and binds the value to
+    /// the statement’s named parameter using the `:<column>` syntax. Column names from the row must
+    /// match named parameters defined in the SQL statement.
+    ///
+    /// For example, a column named `"userID"` will be bound to a parameter `:userID` in the SQL.
+    ///
+    /// - Throws: `SQLiteError` if a parameter is missing or if a binding operation fails.
+    public func bind(_ row: SQLiteRow) throws {
+        try row.forEach { column, value in
+            try bind(value, at: bind(parameterIndexBy: ":\(column)"))
+        }
+    }
+    
+    /// Binds all values from an `Arguments` instance to their corresponding parameters in the statement.
+    ///
+    /// This method iterates through each token–value pair in the provided `Arguments` collection and binds
+    /// the value to the appropriate parameter in the SQL statement. Both indexed (`?NNN`) and named (`:name`)
+    /// parameters are supported.
+    ///
+    /// - Parameter arguments: The `Arguments` instance containing tokens and their associated values.
+    /// - Throws: `SQLiteError` if a parameter is not found or if the binding fails.
+    public func bind(_ arguments: Arguments) throws {
+        try arguments.forEach { token, value in
+            let index = switch token {
+            case .indexed(let index):
+                Int32(index)
+            case .named(let name):
+                bind(parameterIndexBy: ":\(name)")
+            }
+            try bind(value, at: index)
+        }
+    }
+    
     /// Clears all parameter bindings from the statement.
     ///
     /// This method resets any parameter bindings, allowing you to reuse the same SQL statement
@@ -413,7 +532,7 @@ public final class Statement: Equatable, Hashable {
     /// It then populates a ``SQLiteRow`` instance with these column-value pairs.
     ///
     /// - Returns: A `SQLiteRow` instance representing the current row of the result set.
-    public func rowValue() -> SQLiteRow {
+    public func currentRow() -> SQLiteRow {
         var row = SQLiteRow()
         for index in 0..<columnCount() {
             let name = columnName(at: index)
@@ -453,6 +572,84 @@ public final class Statement: Equatable, Hashable {
         if sqlite3_reset(statement) != SQLITE_OK {
             throw SQLiteError(connection)
         }
+    }
+    
+    /// Executes the statement once for each row, returning the collected result rows if any.
+    ///
+    /// This method binds each row’s named values to the statement parameters and executes the
+    /// statement. After each execution, any resulting rows are collected and returned. If the `rows`
+    /// array is empty, the statement will still execute once with no parameters bound.
+    ///
+    /// Use this method for queries such as `INSERT` or `UPDATE` statements with changing
+    /// parameter values.
+    ///
+    /// - Note: If `rows` is empty, the statement executes once with no bound values.
+    ///
+    /// - Parameter rows: A list of `SQLiteRow` values to bind to the statement.
+    /// - Returns: An array of result rows collected from all executions of the statement.
+    /// - Throws: ``SQLiteError`` if binding or execution fails.
+    @discardableResult
+    public func execute(rows: [SQLiteRow]) throws -> [SQLiteRow] {
+        var result = [SQLiteRow]()
+        var index = 0
+        
+        repeat {
+            if rows.count > index {
+                try bind(rows[index])
+            }
+            while try step() {
+                result.append(currentRow())
+            }
+            try clearBindings()
+            try reset()
+            index += 1
+        } while index < rows.count
+        
+        return result
+    }
+    
+    /// Executes the statement once for each arguments set, returning any resulting rows.
+    ///
+    /// This method binds each `Arguments` set (indexed or named) to the statement and executes it. All
+    /// result rows from each execution are collected and returned. If no arguments are provided, the
+    /// statement executes once with no values bound.
+    ///
+    /// Use this method for queries such as `SELECT`, `INSERT`, `UPDATE`, or `DELETE` where results
+    /// may be expected and multiple executions are needed.
+    ///
+    /// ```swift
+    /// let stmt = try connection.prepare(
+    ///     sql: "SELECT * FROM logs WHERE level = :level"
+    /// )
+    /// let result = try stmt.execute(args: [
+    ///     ["level": "info"],
+    ///     ["level": "error"]
+    /// ])
+    /// ```
+    ///
+    /// - Note: If `args` is `nil` or empty, the statement executes once with no bound values.
+    ///
+    /// - Parameter args: A list of `Arguments` to bind and execute. Defaults to `nil`.
+    /// - Returns: A flat array of result rows produced by all executions.
+    /// - Throws: ``SQLiteError`` if binding or execution fails.
+    @discardableResult
+    public func execute(args: [Arguments]? = nil) throws -> [SQLiteRow] {
+        var result = [SQLiteRow]()
+        var index = 0
+        
+        repeat {
+            if let args, args.count > index {
+                try bind(args[index])
+            }
+            while try step() {
+                result.append(currentRow())
+            }
+            try clearBindings()
+            try reset()
+            index += 1
+        } while index < args?.count ?? 0
+        
+        return result
     }
     
     // MARK: - Equatable

@@ -1,27 +1,27 @@
-import XCTest
+import Testing
 import DataLiteC
 import DataLiteCore
 
-class SQLiteRawTypeTests: XCTestCase {
-    func testInitializationFromRawValue() {
-        XCTAssertEqual(SQLiteRawType(rawValue: SQLITE_INTEGER), .int)
-        XCTAssertEqual(SQLiteRawType(rawValue: SQLITE_FLOAT), .real)
-        XCTAssertEqual(SQLiteRawType(rawValue: SQLITE_TEXT), .text)
-        XCTAssertEqual(SQLiteRawType(rawValue: SQLITE_BLOB), .blob)
-        XCTAssertEqual(SQLiteRawType(rawValue: SQLITE_NULL), .null)
-        XCTAssertNil(SQLiteRawType(rawValue: -1))
+struct SQLiteRawTypeTests {
+    @Test func testInitializationFromRawValue() {
+        #expect(SQLiteRawType(rawValue: SQLITE_INTEGER) == .int)
+        #expect(SQLiteRawType(rawValue: SQLITE_FLOAT) == .real)
+        #expect(SQLiteRawType(rawValue: SQLITE_TEXT) == .text)
+        #expect(SQLiteRawType(rawValue: SQLITE_BLOB) == .blob)
+        #expect(SQLiteRawType(rawValue: SQLITE_NULL) == .null)
+        #expect(SQLiteRawType(rawValue: -1) == nil)
     }
     
-    func testRawValue() {
-        XCTAssertEqual(SQLiteRawType.int.rawValue, SQLITE_INTEGER)
-        XCTAssertEqual(SQLiteRawType.real.rawValue, SQLITE_FLOAT)
-        XCTAssertEqual(SQLiteRawType.text.rawValue, SQLITE_TEXT)
-        XCTAssertEqual(SQLiteRawType.blob.rawValue, SQLITE_BLOB)
-        XCTAssertEqual(SQLiteRawType.null.rawValue, SQLITE_NULL)
+    @Test func testRawValue() {
+        #expect(SQLiteRawType.int.rawValue == SQLITE_INTEGER)
+        #expect(SQLiteRawType.real.rawValue == SQLITE_FLOAT)
+        #expect(SQLiteRawType.text.rawValue == SQLITE_TEXT)
+        #expect(SQLiteRawType.blob.rawValue == SQLITE_BLOB)
+        #expect(SQLiteRawType.null.rawValue == SQLITE_NULL)
     }
     
-    func testInvalidRawValue() {
+    @Test func testInvalidRawValue() {
         let invalidRawValue: Int32 = 9999
-        XCTAssertNil(SQLiteRawType(rawValue: invalidRawValue))
+        #expect(SQLiteRawType(rawValue: invalidRawValue) == nil)
     }
 }
