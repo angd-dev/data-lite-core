@@ -1,46 +1,45 @@
-import XCTest
+import Testing
 import DataLiteCore
 import DataLiteC
 
-class StatementOptionsTests: XCTestCase {
-    func testOptionsInitialization() {
+struct StatementOptionsTests {
+    @Test func testOptionsInitialization() {
         let options: Statement.Options = [.persistent]
         
-        XCTAssertTrue(options.contains(.persistent), "Persistent option should be set")
-        XCTAssertFalse(options.contains(.noVtab), "noVtab option should not be set")
+        #expect(options.contains(.persistent))
+        #expect(options.contains(.noVtab) == false)
     }
     
-    func testOptionsCombination() {
+    @Test func testOptionsCombination() {
         var options: Statement.Options = [.persistent]
         
-        XCTAssertTrue(options.contains(.persistent), "Persistent option should be set initially")
-        XCTAssertFalse(options.contains(.noVtab), "noVtab option should not be set initially")
+        #expect(options.contains(.persistent))
+        #expect(options.contains(.noVtab) == false)
         
         options.insert(.noVtab)
         
-        XCTAssertTrue(options.contains(.persistent), "Persistent option should still be set")
-        XCTAssertTrue(options.contains(.noVtab), "noVtab option should be set after insertion")
+        #expect(options.contains(.persistent))
+        #expect(options.contains(.noVtab))
     }
     
-    func testOptionsRemoval() {
+    @Test func testOptionsRemoval() {
         var options: Statement.Options = [.persistent, .noVtab]
         
-        XCTAssertTrue(options.contains(.persistent), "Persistent option should be set initially")
-        XCTAssertTrue(options.contains(.noVtab), "noVtab option should be set initially")
+        #expect(options.contains(.persistent))
+        #expect(options.contains(.noVtab))
         
         options.remove(.noVtab)
         
-        XCTAssertTrue(options.contains(.persistent), "Persistent option should still be set")
-        XCTAssertFalse(options.contains(.noVtab), "noVtab option should be removed")
+        #expect(options.contains(.persistent))
+        #expect(options.contains(.noVtab) == false)
     }
     
-    func testOptionsRawValue() {
+    @Test func testOptionsRawValue() {
         let options: Statement.Options = [.persistent, .noVtab]
         let rawOpts = UInt32(SQLITE_PREPARE_PERSISTENT | SQLITE_PREPARE_NO_VTAB)
         
-        XCTAssertEqual(options.rawValue, rawOpts, "Raw value should match combined options")
-        
-        XCTAssertEqual(Statement.Options.persistent.rawValue, UInt32(SQLITE_PREPARE_PERSISTENT))
-        XCTAssertEqual(Statement.Options.noVtab.rawValue, UInt32(SQLITE_PREPARE_NO_VTAB))
+        #expect(options.rawValue == rawOpts)
+        #expect(Statement.Options.persistent.rawValue == UInt32(SQLITE_PREPARE_PERSISTENT))
+        #expect(Statement.Options.noVtab.rawValue == UInt32(SQLITE_PREPARE_NO_VTAB))
     }
 }

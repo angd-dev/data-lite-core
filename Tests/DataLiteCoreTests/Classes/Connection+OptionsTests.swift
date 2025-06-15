@@ -1,72 +1,69 @@
-import XCTest
+import Testing
 import DataLiteC
 import DataLiteCore
 
-final class ConnectionOptionsTests: XCTestCase {
-    func testReadOnlyOption() {
+struct ConnectionOptionsTests {
+    @Test func testReadOnlyOption() {
         let options: Connection.Options = [.readonly]
-        XCTAssertTrue(options.contains(.readonly), "Options should contain readonly.")
-        XCTAssertFalse(options.contains(.readwrite), "Options should not contain readwrite.")
+        #expect(options.contains(.readonly))
     }
     
-    func testReadWriteOption() {
+    @Test func testReadWriteOption() {
         let options: Connection.Options = [.readwrite]
-        XCTAssertTrue(options.contains(.readwrite), "Options should contain readwrite.")
-        XCTAssertFalse(options.contains(.readonly), "Options should not contain readonly.")
+        #expect(options.contains(.readwrite))
     }
     
-    func testCreateOption() {
+    @Test func testCreateOption() {
         let options: Connection.Options = [.create]
-        XCTAssertTrue(options.contains(.create), "Options should contain create.")
+        #expect(options.contains(.create))
     }
     
-    func testMultipleOptions() {
+    @Test func testMultipleOptions() {
         let options: Connection.Options = [.readwrite, .create, .memory]
-        XCTAssertTrue(options.contains(.readwrite), "Options should contain readwrite.")
-        XCTAssertTrue(options.contains(.create), "Options should contain create.")
-        XCTAssertTrue(options.contains(.memory), "Options should contain memory.")
-        XCTAssertFalse(options.contains(.readonly), "Options should not contain readonly.")
+        #expect(options.contains(.readwrite))
+        #expect(options.contains(.create))
+        #expect(options.contains(.memory))
     }
     
-    func testNoFollowOption() {
+    @Test func testNoFollowOption() {
         let options: Connection.Options = [.nofollow]
-        XCTAssertTrue(options.contains(.nofollow), "Options should contain nofollow.")
+        #expect(options.contains(.nofollow))
     }
     
-    func testAllOptions() {
+    @Test func testAllOptions() {
         let options: Connection.Options = [
             .readonly, .readwrite, .create, .uri, .memory,
             .nomutex, .fullmutex, .sharedcache,
             .privatecache, .exrescode, .nofollow
         ]
         
-        XCTAssertTrue(options.contains(.readonly), "Options should contain readonly.")
-        XCTAssertTrue(options.contains(.readwrite), "Options should contain readwrite.")
-        XCTAssertTrue(options.contains(.create), "Options should contain create.")
-        XCTAssertTrue(options.contains(.uri), "Options should contain uri.")
-        XCTAssertTrue(options.contains(.memory), "Options should contain memory.")
-        XCTAssertTrue(options.contains(.nomutex), "Options should contain nomutex.")
-        XCTAssertTrue(options.contains(.fullmutex), "Options should contain fullmutex.")
-        XCTAssertTrue(options.contains(.sharedcache), "Options should contain sharedcache.")
-        XCTAssertTrue(options.contains(.privatecache), "Options should contain privatecache.")
-        XCTAssertTrue(options.contains(.exrescode), "Options should contain exrescode.")
-        XCTAssertTrue(options.contains(.nofollow), "Options should contain nofollow.")
+        #expect(options.contains(.readonly))
+        #expect(options.contains(.readwrite))
+        #expect(options.contains(.create))
+        #expect(options.contains(.uri))
+        #expect(options.contains(.memory))
+        #expect(options.contains(.nomutex))
+        #expect(options.contains(.fullmutex))
+        #expect(options.contains(.sharedcache))
+        #expect(options.contains(.privatecache))
+        #expect(options.contains(.exrescode))
+        #expect(options.contains(.nofollow))
     }
     
-    func testOptionsRawValue() {
+    @Test func testOptionsRawValue() {
         let options: Connection.Options = [.readwrite, .create]
         let expectedRawValue = Int32(SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE)
-        XCTAssertEqual(options.rawValue, expectedRawValue, "Raw value should match combined options")
+        #expect(options.rawValue == expectedRawValue)
         
-        XCTAssertEqual(Connection.Options.readonly.rawValue, Int32(SQLITE_OPEN_READONLY))
-        XCTAssertEqual(Connection.Options.readwrite.rawValue, Int32(SQLITE_OPEN_READWRITE))
-        XCTAssertEqual(Connection.Options.create.rawValue, Int32(SQLITE_OPEN_CREATE))
-        XCTAssertEqual(Connection.Options.memory.rawValue, Int32(SQLITE_OPEN_MEMORY))
-        XCTAssertEqual(Connection.Options.nomutex.rawValue, Int32(SQLITE_OPEN_NOMUTEX))
-        XCTAssertEqual(Connection.Options.fullmutex.rawValue, Int32(SQLITE_OPEN_FULLMUTEX))
-        XCTAssertEqual(Connection.Options.sharedcache.rawValue, Int32(SQLITE_OPEN_SHAREDCACHE))
-        XCTAssertEqual(Connection.Options.privatecache.rawValue, Int32(SQLITE_OPEN_PRIVATECACHE))
-        XCTAssertEqual(Connection.Options.exrescode.rawValue, Int32(SQLITE_OPEN_EXRESCODE))
-        XCTAssertEqual(Connection.Options.nofollow.rawValue, Int32(SQLITE_OPEN_NOFOLLOW))
+        #expect(Connection.Options.readonly.rawValue == SQLITE_OPEN_READONLY)
+        #expect(Connection.Options.readwrite.rawValue == SQLITE_OPEN_READWRITE)
+        #expect(Connection.Options.create.rawValue == SQLITE_OPEN_CREATE)
+        #expect(Connection.Options.memory.rawValue == SQLITE_OPEN_MEMORY)
+        #expect(Connection.Options.nomutex.rawValue == SQLITE_OPEN_NOMUTEX)
+        #expect(Connection.Options.fullmutex.rawValue == SQLITE_OPEN_FULLMUTEX)
+        #expect(Connection.Options.sharedcache.rawValue == SQLITE_OPEN_SHAREDCACHE)
+        #expect(Connection.Options.privatecache.rawValue == SQLITE_OPEN_PRIVATECACHE)
+        #expect(Connection.Options.exrescode.rawValue == SQLITE_OPEN_EXRESCODE)
+        #expect(Connection.Options.nofollow.rawValue == SQLITE_OPEN_NOFOLLOW)
     }
 }

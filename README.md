@@ -27,7 +27,7 @@ To add **DataLiteCore** to your project, you need to use **Swift Package Manager
 1. Open your project in Xcode.
 2. Navigate to the `File` menu and select `Add Package Dependencies`.
 3. Enter the URL of the **DataLiteCore** repository: `https://github.com/angd-dev/data-lite-core.git`.
-4. Choose the version you want to use (e.g., `0.1.0`).
+4. Choose the version you want to use (e.g., `0.2.0`).
 5. Add the library to your target module.
 
 ### Adding to Package.swift
@@ -41,13 +41,13 @@ import PackageDescription
 let package = Package(
     name: "YourProject",
     dependencies: [
-        .package(url: "https://github.com/angd-dev/data-lite-core.git", from: "0.1.0")
+        .package(url: "https://github.com/angd-dev/data-lite-core.git", from: "0.2.0")
     ],
     targets: [
         .target(
             name: "YourTarget",
             dependencies: [
-                .product(name: "DataLiteCore", package: "sqlite-swift")
+                .product(name: "DataLiteCore", package: "data-lite-core")
             ]
         )
     ]
@@ -56,7 +56,7 @@ let package = Package(
 
 ## Additional Resources
 
-For more detailed information and usage examples of **DataLiteCore**, please visit the [documentation](https://docs.angd.dev/?package=data-lite-core&version=0.1.0).
+For more detailed information and usage examples of **DataLiteCore**, please visit the [documentation](https://docs.angd.dev/?package=data-lite-core&version=0.2.0).
 
 ## License
 
