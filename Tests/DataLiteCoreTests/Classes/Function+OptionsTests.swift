@@ -1,63 +1,58 @@
-import XCTest
+import Testing
 import DataLiteC
 import DataLiteCore
 
-class FunctionOptionsTests: XCTestCase {
-    func testSingleOption() {
-        let option = Function.Options.deterministic
-        XCTAssertEqual(option.rawValue, SQLITE_DETERMINISTIC)
-        
-        let option2 = Function.Options.directonly
-        XCTAssertEqual(option2.rawValue, SQLITE_DIRECTONLY)
-        
-        let option3 = Function.Options.innocuous
-        XCTAssertEqual(option3.rawValue, SQLITE_INNOCUOUS)
+struct FunctionOptionsTests {
+    @Test func testSingleOption() {
+        #expect(Function.Options.deterministic.rawValue == SQLITE_DETERMINISTIC)
+        #expect(Function.Options.directonly.rawValue == SQLITE_DIRECTONLY)
+        #expect(Function.Options.innocuous.rawValue == SQLITE_INNOCUOUS)
     }
     
-    func testMultipleOptions() {
+    @Test func testMultipleOptions() {
         let options: Function.Options = [.deterministic, .directonly]
-        XCTAssertTrue(options.contains(.deterministic))
-        XCTAssertTrue(options.contains(.directonly))
-        XCTAssertFalse(options.contains(.innocuous))
+        #expect(options.contains(.deterministic))
+        #expect(options.contains(.directonly))
+        #expect(options.contains(.innocuous) == false)
     }
     
-    func testEqualityAndHashability() {
+    @Test func testEqualityAndHashability() {
         let options1: Function.Options = [.deterministic, .innocuous]
         let options2: Function.Options = [.deterministic, .innocuous]
-        XCTAssertEqual(options1, options2)
+        #expect(options1 == options2)
         
         let hash1 = options1.hashValue
         let hash2 = options2.hashValue
-        XCTAssertEqual(hash1, hash2)
+        #expect(hash1 == hash2)
     }
     
-    func testEmptyOptions() {
+    @Test func testEmptyOptions() {
         let options = Function.Options(rawValue: 0)
-        XCTAssertFalse(options.contains(.deterministic))
-        XCTAssertFalse(options.contains(.directonly))
-        XCTAssertFalse(options.contains(.innocuous))
+        #expect(options.contains(.deterministic) == false)
+        #expect(options.contains(.directonly) == false)
+        #expect(options.contains(.innocuous) == false)
     }
     
-    func testRawValueInitialization() {
+    @Test func testRawValueInitialization() {
         let rawValue: Int32 = SQLITE_DETERMINISTIC | SQLITE_INNOCUOUS
         let options = Function.Options(rawValue: rawValue)
         
-        XCTAssertTrue(options.contains(.deterministic))
-        XCTAssertTrue(options.contains(.innocuous))
-        XCTAssertFalse(options.contains(.directonly))
+        #expect(options.contains(.deterministic))
+        #expect(options.contains(.innocuous))
+        #expect(options.contains(.directonly) == false)
     }
     
-    func testAddingAndRemovingOptions() {
+    @Test func testAddingAndRemovingOptions() {
         var options: Function.Options = []
         
         options.insert(.deterministic)
-        XCTAssertTrue(options.contains(.deterministic))
+        #expect(options.contains(.deterministic))
         
         options.insert(.directonly)
-        XCTAssertTrue(options.contains(.directonly))
+        #expect(options.contains(.directonly))
         
         options.remove(.deterministic)
-        XCTAssertFalse(options.contains(.deterministic))
+        #expect(options.contains(.deterministic) == false)
     }
 }
 

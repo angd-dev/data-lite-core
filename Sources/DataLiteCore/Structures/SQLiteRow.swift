@@ -81,7 +81,7 @@ public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
     /// elements in the row are indexed starting from zero, this property consistently
     /// returns zero, allowing for predictable iteration through the row's data.
     ///
-    /// - Complexity: O(1)
+    /// - Complexity: `O(1)`
     public var startIndex: Index {
         0
     }
@@ -93,7 +93,7 @@ public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
     /// through the row's data in a collection context. The `endIndex` is useful
     /// for determining the bounds of the row's elements when traversing or accessing them.
     ///
-    /// - Complexity: O(1)
+    /// - Complexity: `O(1)`
     public var endIndex: Index {
         elements.count
     }
@@ -104,7 +104,7 @@ public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
     /// It provides a quick way to check if there are any data present in the row, which can be
     /// useful for validation or conditional logic when working with database rows.
     ///
-    /// - Complexity: O(1)
+    /// - Complexity: `O(1)`
     public var isEmpty: Bool {
         elements.isEmpty
     }
@@ -116,7 +116,7 @@ public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
     /// way to determine how much data is present in the row. This is useful for iteration
     /// and conditional checks when working with database rows.
     ///
-    /// - Complexity: O(1)
+    /// - Complexity: `O(1)`
     public var count: Int {
         elements.count
     }
@@ -129,6 +129,25 @@ public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
     /// and logging purposes.
     public var description: String {
         elements.description
+    }
+    
+    /// A list of column names in the row, preserving their insertion order.
+    ///
+    /// Useful for dynamically generating SQL queries (e.g. `INSERT INTO ... (columns)`).
+    ///
+    /// - Complexity: `O(1)`
+    public var columns: [String] {
+        elements.keys.elements
+    }
+    
+    /// A list of SQL named parameters in the form `:column`, preserving column order.
+    ///
+    /// Useful for generating placeholders in SQL queries (e.g. `VALUES (:column1, :column2, ...)`)
+    /// to match the row's structure.
+    ///
+    /// - Complexity: `O(n)`
+    public var namedParameters: [String] {
+        elements.keys.map { ":\($0)" }
     }
     
     // MARK: - Inits
@@ -151,7 +170,7 @@ public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
     /// - Parameter index: The index of the element to access.
     /// - Returns: A tuple containing the column name and its associated value.
     ///
-    /// - Complexity: O(1)
+    /// - Complexity: `O(1)`
     public subscript(index: Index) -> Element {
         let element = elements.elements[index]
         return (element.key, element.value)
@@ -186,7 +205,7 @@ public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
     /// - Parameter i: A valid index of the row.
     /// - Returns: The index immediately after `i`.
     ///
-    /// - Complexity: O(1)
+    /// - Complexity: `O(1)`
     public func index(after i: Index) -> Index {
         i + 1
     }
@@ -199,7 +218,7 @@ public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
     /// - Parameter column: The name of the column to check for.
     /// - Returns: `true` if the column exists; otherwise, `false`.
     ///
-    /// - Complexity: On average, the complexity is O(1).
+    /// - Complexity: On average, the complexity is `O(1)`.
     public func contains(_ column: Column) -> Bool {
         elements.keys.contains(column)
     }

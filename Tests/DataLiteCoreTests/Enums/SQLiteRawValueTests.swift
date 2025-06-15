@@ -1,35 +1,36 @@
-import XCTest
+import Testing
+import Foundation
 import DataLiteCore
 
-class SQLiteRawValueTests: XCTestCase {
-    func testIntValue() {
+struct SQLiteRawValueTests {
+    @Test func testIntValue() {
         let value = SQLiteRawValue.int(42)
-        XCTAssertEqual(value.description, "42")
+        #expect(value.description == "42")
     }
     
-    func testRealValue() {
+    @Test func testRealValue() {
         let value = SQLiteRawValue.real(3.14)
-        XCTAssertEqual(value.description, "3.14")
+        #expect(value.description == "3.14")
     }
     
-    func testTextValue() {
+    @Test func testTextValue() {
         let value = SQLiteRawValue.text("Hello, World!")
-        XCTAssertEqual(value.description, "'Hello, World!'")
+        #expect(value.description == "'Hello, World!'")
     }
     
-    func testTextValueWithSingleQuote() {
+    @Test func testTextValueWithSingleQuote() {
         let value = SQLiteRawValue.text("O'Reilly")
-        XCTAssertEqual(value.description, "'O''Reilly'") // Escaped single quote
+        #expect(value.description == "'O''Reilly'") // Escaped single quote
     }
     
-    func testBlobValue() {
+    @Test func testBlobValue() {
         let data = Data([0xDE, 0xAD, 0xBE, 0xEF])
         let value = SQLiteRawValue.blob(data)
-        XCTAssertEqual(value.description, "X'DEADBEEF'")
+        #expect(value.description == "X'DEADBEEF'")
     }
     
-    func testNullValue() {
+    @Test func testNullValue() {
         let value = SQLiteRawValue.null
-        XCTAssertEqual(value.description, "NULL")
+        #expect(value.description == "NULL")
     }
 }

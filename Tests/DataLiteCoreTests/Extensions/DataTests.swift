@@ -1,22 +1,22 @@
-import XCTest
+import Testing
+import Foundation
 import DataLiteCore
 
-class DataSQLiteRawRepresentableTests: XCTestCase {
-    func testDataToSQLiteRawValue() {
+struct DataSQLiteRawRepresentableTests {
+    @Test func testDataToSQLiteRawValue() {
         let data = Data([0x01, 0x02, 0x03])
-        XCTAssertEqual(data.sqliteRawValue, .blob(data))
+        #expect(data.sqliteRawValue == .blob(data))
     }
     
-    func testSQLiteRawValueToData() {
+    @Test func testSQLiteRawValueToData() {
         let data = Data([0x01, 0x02, 0x03])
         let rawValue = SQLiteRawValue.blob(data)
         
-        XCTAssertEqual(Data(rawValue), data)
+        #expect(Data(rawValue) == data)
         
-        // Test invalid cases
-        XCTAssertNil(Data(.int(1))) // Should be nil for non-blob values
-        XCTAssertNil(Data(.real(1.0))) // Should be nil for non-blob values
-        XCTAssertNil(Data(.text("blob"))) // Should be nil for non-blob values
-        XCTAssertNil(Data(.null)) // Should be nil for null values
+        #expect(Data(.int(1)) == nil)
+        #expect(Data(.real(1.0)) == nil)
+        #expect(Data(.text("blob")) == nil)
+        #expect(Data(.null) == nil)
     }
 }

@@ -1,43 +1,43 @@
-import XCTest
+import Testing
+import Foundation
 import DataLiteCore
 
-class BinaryIntegerTests: XCTestCase {
-    func testIntegerToSQLiteRawValue() {
-        XCTAssertEqual(Int(42).sqliteRawValue, .int(42))
-        XCTAssertEqual(Int8(42).sqliteRawValue, .int(42))
-        XCTAssertEqual(Int16(42).sqliteRawValue, .int(42))
-        XCTAssertEqual(Int32(42).sqliteRawValue, .int(42))
-        XCTAssertEqual(Int64(42).sqliteRawValue, .int(42))
+struct BinaryIntegerTests {
+    @Test func testIntegerToSQLiteRawValue() {
+        #expect(Int(42).sqliteRawValue == .int(42))
+        #expect(Int8(42).sqliteRawValue == .int(42))
+        #expect(Int16(42).sqliteRawValue == .int(42))
+        #expect(Int32(42).sqliteRawValue == .int(42))
+        #expect(Int64(42).sqliteRawValue == .int(42))
         
-        XCTAssertEqual(UInt(42).sqliteRawValue, .int(42))
-        XCTAssertEqual(UInt8(42).sqliteRawValue, .int(42))
-        XCTAssertEqual(UInt16(42).sqliteRawValue, .int(42))
-        XCTAssertEqual(UInt32(42).sqliteRawValue, .int(42))
-        XCTAssertEqual(UInt64(42).sqliteRawValue, .int(42))
+        #expect(UInt(42).sqliteRawValue == .int(42))
+        #expect(UInt8(42).sqliteRawValue == .int(42))
+        #expect(UInt16(42).sqliteRawValue == .int(42))
+        #expect(UInt32(42).sqliteRawValue == .int(42))
+        #expect(UInt64(42).sqliteRawValue == .int(42))
     }
     
-    func testIntegerInitializationFromSQLiteRawValue() {
-        XCTAssertEqual(Int(SQLiteRawValue.int(42)), 42)
-        XCTAssertEqual(Int8(SQLiteRawValue.int(42)), 42)
-        XCTAssertEqual(Int16(SQLiteRawValue.int(42)), 42)
-        XCTAssertEqual(Int32(SQLiteRawValue.int(42)), 42)
-        XCTAssertEqual(Int64(SQLiteRawValue.int(42)), 42)
+    @Test func testIntegerInitializationFromSQLiteRawValue() {
+        #expect(Int(SQLiteRawValue.int(42)) == 42)
+        #expect(Int8(SQLiteRawValue.int(42)) == 42)
+        #expect(Int16(SQLiteRawValue.int(42)) == 42)
+        #expect(Int32(SQLiteRawValue.int(42)) == 42)
+        #expect(Int64(SQLiteRawValue.int(42)) == 42)
         
-        XCTAssertEqual(UInt(SQLiteRawValue.int(42)), 42)
-        XCTAssertEqual(UInt8(SQLiteRawValue.int(42)), 42)
-        XCTAssertEqual(UInt16(SQLiteRawValue.int(42)), 42)
-        XCTAssertEqual(UInt32(SQLiteRawValue.int(42)), 42)
-        XCTAssertEqual(UInt64(SQLiteRawValue.int(42)), 42)
+        #expect(UInt(SQLiteRawValue.int(42)) == 42)
+        #expect(UInt8(SQLiteRawValue.int(42)) == 42)
+        #expect(UInt16(SQLiteRawValue.int(42)) == 42)
+        #expect(UInt32(SQLiteRawValue.int(42)) == 42)
+        #expect(UInt64(SQLiteRawValue.int(42)) == 42)
     }
     
-    func testInvalidIntegerInitialization() {
-        // Case when initializing with a non-integer SQLiteRawValue
-        XCTAssertNil(Int(SQLiteRawValue.real(3.14)))
-        XCTAssertNil(Int8(SQLiteRawValue.text("test")))
-        XCTAssertNil(UInt32(SQLiteRawValue.blob(Data([0x01, 0x02]))))
+    @Test func testInvalidIntegerInitialization() {
+        #expect(Int(SQLiteRawValue.real(3.14)) == nil)
+        #expect(Int8(SQLiteRawValue.text("test")) == nil)
+        #expect(UInt32(SQLiteRawValue.blob(Data([0x01, 0x02]))) == nil)
         
-        // Test with out-of-range values
+        // Out-of-range conversion
         let largeValue = Int64.max
-        XCTAssertNil(Int8(exactly: largeValue))
+        #expect(Int8(exactly: largeValue) == nil)
     }
 }
