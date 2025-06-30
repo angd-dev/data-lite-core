@@ -104,6 +104,17 @@ import Foundation
 /// - Important: Nested comments are not supported, so avoid placing multi-line comments inside
 ///   other multi-line comments.
 ///
+/// - Important: `SQLScript` does not support SQL scripts containing transactions.
+///   To execute an `SQLScript`, use the method ``Connection/execute(sql:)``, which executes
+///   each statement individually in autocommit mode.
+///
+///   If you need to execute the entire `SQLScript` within a single transaction, use the methods
+///   ``Connection/beginTransaction(_:)``, ``Connection/commitTransaction()``, and
+///   ``Connection/rollbackTransaction()`` to manage the transaction explicitly.
+///
+///   If your SQL script includes transaction statements (e.g., BEGIN, COMMIT, ROLLBACK),
+///   execute the entire script using ``Connection/execute(raw:)``.
+///
 /// - Important: This class is not designed to work with untrusted user data. Never insert
 ///   user-provided data directly into SQL queries without proper sanitization or parameterization.
 ///   Unfiltered data can lead to SQL injection attacks, which pose a security risk to your data and
@@ -218,7 +229,7 @@ public struct SQLScript: Collection, ExpressibleByStringLiteral {
     /// - Warning: The string literal should represent valid SQL queries. Invalid syntax or
     ///   improperly formatted SQL may lead to an error at runtime.
     public init(stringLiteral value: StringLiteralType) {
-        try! self.init(string: value)
+        self.init(string: value)
     }
     
     /// Initializes an instance of `SQLScript` by parsing SQL queries from the specified string.
@@ -227,35 +238,11 @@ public struct SQLScript: Collection, ExpressibleByStringLiteral {
     /// removing comments and empty lines.
     ///
     /// - Parameter string: The string containing SQL queries.
-    ///
-    /// - Throws: An error if the string cannot be processed correctly.
-    public init(string: String) throws {
-        let comments = "--.*|\\/\\*(?:.|\\n)*?\\*\\/"
-        let emptyLines = "^\\s\\n|\\s+(?=(?:\\n|$))"
-        let statements = "\\w(?:.|\\n)*?(?:(?=;|\\z))"
-        
-#if os(iOS) || os(macOS)
-        if #available(macOS 13.0, iOS 16.0, *) {
-            elements = try string
-                .replacing(Regex(comments), with: "")
-                .replacing(Regex(emptyLines).anchorsMatchLineEndings(), with: "")
-                .matches(of: Regex(statements, as: Substring.self))
-                .map { String($0.output) }
-        } else {
-            let string = string
-                .replacingOccurrences(of: comments, with: "", options: .regularExpression)
-                .replacingOccurrences(of: emptyLines, with: "", options: .regularExpression)
-            elements = try NSRegularExpression(pattern: statements)
-                .matches(in: string, range: NSRange(string.startIndex..., in: string))
-                .map { (string as NSString).substring(with: $0.range) }
-        }
-#else
-        elements = try string
-            .replacing(Regex(comments), with: "")
-            .replacing(Regex(emptyLines).anchorsMatchLineEndings(), with: "")
-            .matches(of: Regex(statements, as: Substring.self))
-            .map { String($0.output) }
-#endif
+    public init(string: String) {
+        elements = string
+            .removingComments()
+            .trimmingLines()
+            .splitStatements()
     }
     
     // MARK: - Collection Methods

@@ -275,6 +275,7 @@ import DataLiteC
 /// ### Executing SQL Script
 ///
 /// - ``execute(sql:)``
+/// - ``execute(raw:)``
 ///
 /// ### Executing PRAGMA Queries
 ///
@@ -753,17 +754,33 @@ public final class Connection {
     
     // MARK: - Executing SQL Script
     
-    /// Executes SQL statements provided in a `SQLScript` instance.
+    /// Executes all SQL statements contained in a given `SQLScript`.
     ///
-    /// This function iterates over each SQL statement in the provided ``SQLScript`` instance
-    /// and executes them sequentially. Each statement is executed in autocommit mode.
+    /// This method iterates over each SQL statement within the provided ``SQLScript``
+    /// and executes them sequentially. Each statement is prepared and executed in
+    /// autocommit mode by stepping through the prepared statement until completion.
     ///
-    /// - Parameter script: The ``SQLScript`` instance containing SQL statements to execute.
-    /// - Throws: An ``SQLiteError`` if the SQL preparation or execution fails.
+    /// - Parameter script: The ``SQLScript`` instance containing multiple SQL statements to execute.
+    /// - Throws: An ``SQLiteError`` if preparation or execution of any statement fails.
     public func execute(sql script: SQLScript) throws {
         try script.forEach { query in
             let stmt = try prepare(sql: query)
             while try stmt.step() {}
+        }
+    }
+    
+    /// Executes a raw SQL string directly on the SQLite connection.
+    ///
+    /// This method uses `sqlite3_exec` to execute the provided SQL string.
+    /// It is suitable for executing SQL commands that do not return results,
+    /// such as `CREATE TABLE`, `INSERT`, or `UPDATE`.
+    ///
+    /// - Parameter sql: The raw SQL string to execute.
+    /// - Throws: An ``SQLiteError`` if the execution fails.
+    public func execute(raw sql: String) throws {
+        let status = sqlite3_exec(connection, sql, nil, nil, nil)
+        if status != SQLITE_OK {
+            throw SQLiteError(connection)
         }
     }
     
