@@ -180,7 +180,7 @@ let SQLITE_TRANSIENT = unsafeBitCast(
 /// ```
 ///
 /// This approach eliminates the need to manually write parameter placeholders or maintain their order.
-/// It also ensures full compatibility with the ``bind(_:)`` method.
+/// It also ensures full compatibility with the ``bind(_:)-(SQLiteRow)`` method.
 ///
 /// ### Updating a Row
 ///
@@ -271,8 +271,8 @@ let SQLITE_TRANSIENT = unsafeBitCast(
 /// - ``bind(parameterNameBy:)``
 /// - ``bind(_:at:)-(SQLiteRawValue,_)``
 /// - ``bind(_:at:)-(T?,_)``
-/// - ``bind(_:)-(SQLiteRow)``
-/// - ``bind(_:)-(Arguments)``
+/// - ``bind(_:)-2ymd1``
+/// - ``bind(_:)-6887r``
 /// - ``clearBindings()``
 ///
 /// ### Getting Results
