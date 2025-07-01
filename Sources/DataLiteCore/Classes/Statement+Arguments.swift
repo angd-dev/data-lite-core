@@ -35,8 +35,8 @@ extension Statement {
     ///
     /// ## Combining Arguments
     ///
-    /// You can combine two sets of `Arguments` using the ``merge(with:using:)-(_,Resolver)``or
-    /// ``merged(with:using:)-(_,Resolver)``methods. These methods allow you to define how to resolve
+    /// You can combine two sets of `Arguments` using the ``merge(with:using:)-23pzs``or
+    /// ``merged(with:using:)-23p3q``methods. These methods allow you to define how to resolve
     /// conflicts when the same parameter token exists in both argument sets.
     ///
     /// ```swift
@@ -82,8 +82,8 @@ extension Statement {
     /// ### Initializers
     ///
     /// - ``init()``
-    /// - ``init(_:)-([SQLiteRawBindable?])``
-    /// - ``init(_:)-([String:SQLiteRawBindable?])``
+    /// - ``init(_:)-1v7s``
+    /// - ``init(_:)-bfj9``
     /// - ``init(arrayLiteral:)``
     /// - ``init(dictionaryLiteral:)``
     ///
@@ -100,10 +100,10 @@ extension Statement {
     ///
     /// - ``index(after:)``
     /// - ``contains(_:)``
-    /// - ``merged(with:using:)-(_,Resolver)``
-    /// - ``merged(with:using:)-(_,ConflictResolution)``
-    /// - ``merge(with:using:)-(_,Resolver)``
-    /// - ``merge(with:using:)-(_,ConflictResolution)``
+    /// - ``merged(with:using:)-23p3q``
+    /// - ``merged(with:using:)-89krm``
+    /// - ``merge(with:using:)-23pzs``
+    /// - ``merge(with:using:)-4r21o``
     ///
     /// ### Subscripts
     ///
