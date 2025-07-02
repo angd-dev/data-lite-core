@@ -479,7 +479,7 @@ extension String {
     ///                 yyend = yycursor
     ///                 continue loop }
     ///
-    ///             ";" "\n"* {
+    ///             ";" [ \t]* "\n"* {
     ///                 if yynesting == 0 {
     ///                     if yystart < yyend {
     ///                         yyranges.append(yystart..<yyend)
@@ -494,6 +494,9 @@ extension String {
     ///                 yyend = yycursor
     ///                 continue loop }
     ///         */}
+    ///         if yystart < yyend {
+    ///             yyranges.append(yystart..<yyend)
+    ///         }
     ///         return yyranges.map { range in
     ///             let buffer = UnsafeBufferPointer<CChar>(
     ///                 start: yyinput.advanced(by: range.lowerBound),
@@ -565,9 +568,15 @@ extension String {
                     case 4:
                         yych = yyinput[yycursor]
                         switch yych {
-                        case 0x0A:
+                        case 0x09:
+                            fallthrough
+                        case 0x20:
                             yycursor += 1
                             yystate = 4
+                            continue yyl
+                        case 0x0A:
+                            yycursor += 1
+                            yystate = 10
                             continue yyl
                         default:
                             yystate = 5
@@ -591,7 +600,7 @@ extension String {
                             fallthrough
                         case 0x65:
                             yycursor += 1
-                            yystate = 10
+                            yystate = 11
                             continue yyl
                         default:
                             yystate = 2
@@ -605,7 +614,7 @@ extension String {
                             fallthrough
                         case 0x6E:
                             yycursor += 1
-                            yystate = 12
+                            yystate = 13
                             continue yyl
                         default:
                             yystate = 2
@@ -628,72 +637,86 @@ extension String {
                     case 10:
                         yych = yyinput[yycursor]
                         switch yych {
+                        case 0x0A:
+                            yycursor += 1
+                            yystate = 10
+                            continue yyl
+                        default:
+                            yystate = 5
+                            continue yyl
+                        }
+                    case 11:
+                        yych = yyinput[yycursor]
+                        switch yych {
                         case 0x47:
                             fallthrough
                         case 0x67:
                             yycursor += 1
-                            yystate = 13
+                            yystate = 14
                             continue yyl
                         default:
-                            yystate = 11
+                            yystate = 12
                             continue yyl
                         }
-                    case 11:
+                    case 12:
                         yycursor = yymarker
                         yystate = 2
                         continue yyl
-                    case 12:
+                    case 13:
                         yych = yyinput[yycursor]
                         switch yych {
                         case 0x44:
                             fallthrough
                         case 0x64:
                             yycursor += 1
-                            yystate = 14
+                            yystate = 15
                             continue yyl
                         default:
-                            yystate = 11
+                            yystate = 12
                             continue yyl
                         }
-                    case 13:
+                    case 14:
                         yych = yyinput[yycursor]
                         switch yych {
                         case 0x49:
                             fallthrough
                         case 0x69:
                             yycursor += 1
-                            yystate = 15
+                            yystate = 16
                             continue yyl
                         default:
-                            yystate = 11
+                            yystate = 12
                             continue yyl
                         }
-                    case 14:
+                    case 15:
                         if yynesting > 0 {
                             yynesting -= 1
                         }
                         yyend = yycursor
                         continue loop
-                    case 15:
+                    case 16:
                         yych = yyinput[yycursor]
                         switch yych {
                         case 0x4E:
                             fallthrough
                         case 0x6E:
                             yycursor += 1
-                            yystate = 16
+                            yystate = 17
                             continue yyl
                         default:
-                            yystate = 11
+                            yystate = 12
                             continue yyl
                         }
-                    case 16:
+                    case 17:
                         yynesting += 1
                         yyend = yycursor
                         continue loop
                     default: fatalError("internal lexer error")
                     }
                 }
+            }
+            if yystart < yyend {
+                yyranges.append(yystart..<yyend)
             }
             return yyranges.map { range in
                 let buffer = UnsafeBufferPointer<CChar>(
