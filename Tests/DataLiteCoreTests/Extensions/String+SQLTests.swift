@@ -166,79 +166,79 @@ struct StringSQLTests {
         let expected = "SELECT * FROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingEmptyFirstLineWithSpace() {
         let input = " \nSELECT * FROM users;"
         let expected = "SELECT * FROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingEmptyFirstLineWithTab() {
         let input = "\t\nSELECT * FROM users;"
         let expected = "SELECT * FROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingEmptyMiddleLine() {
         let input = "SELECT *\n\nFROM users;"
         let expected = "SELECT *\nFROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingEmptyMiddleLineWithSpace() {
         let input = "SELECT *\n\u{0020}\nFROM users;"
         let expected = "SELECT *\nFROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingEmptyMiddleLineWithTab() {
         let input = "SELECT *\n\t\nFROM users;"
         let expected = "SELECT *\nFROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingEmptyLastLine() {
         let input = "SELECT * FROM users;\n"
         let expected = "SELECT * FROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingEmptyLastLineWithSpace() {
         let input = "SELECT * FROM users; \n"
         let expected = "SELECT * FROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingEmptyLastLineWithTab() {
         let input = "SELECT * FROM users;\t\n"
         let expected = "SELECT * FROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingTrailingSpacesOnly() {
         let input = "SELECT * FROM users;    "
         let expected = "SELECT * FROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingTrailingSpacesAndNewline() {
         let input = "SELECT * FROM users;   \n"
         let expected = "SELECT * FROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingTrailingTabsOnly() {
         let input = "SELECT * FROM users;\t\t"
         let expected = "SELECT * FROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingTrailingTabsAndNewline() {
         let input = "SELECT * FROM users;\t\t\n"
         let expected = "SELECT * FROM users;"
         #expect(input.trimmingLines() == expected)
     }
-
+    
     @Test func testTrimmingMultipleEmptyLinesAndSpaces() {
         let input = "\n\n\t\u{0020}\nSELECT * FROM users;\n\n\u{0020}\n\n"
         let expected = "SELECT * FROM users;"
@@ -276,6 +276,12 @@ struct StringSQLTests {
         #expect(input.splitStatements() == expected)
     }
     
+    @Test func testSplitSingleStatementWithoutSemicolon() {
+        let input = "SELECT * FROM users"
+        let expected = ["SELECT * FROM users"]
+        #expect(input.splitStatements() == expected)
+    }
+    
     @Test func testSplitMultipleStatements() {
         let input = """
             SELECT * FROM users;
@@ -286,6 +292,20 @@ struct StringSQLTests {
             "SELECT * FROM users",
             "DELETE FROM users WHERE id=123",
             "DELETE FROM users WHERE id=987"
+        ]
+        #expect(input.splitStatements() == expected)
+    }
+    
+    @Test func testSplitMultipleStatementsLastWithoutSemicolon() {
+        let input = """
+            SELECT * FROM users;
+            DELETE FROM users WHERE id=1;
+            UPDATE users SET name='Bob' WHERE id=2
+            """
+        let expected = [
+            "SELECT * FROM users",
+            "DELETE FROM users WHERE id=1",
+            "UPDATE users SET name='Bob' WHERE id=2"
         ]
         #expect(input.splitStatements() == expected)
     }
