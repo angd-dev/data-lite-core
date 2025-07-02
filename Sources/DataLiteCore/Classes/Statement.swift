@@ -93,8 +93,8 @@ let SQLITE_TRANSIENT = unsafeBitCast(
 ///     let query = "INSERT INTO users (name, age) VALUES (:userName, :userAge)"
 ///     let statement = try connection.prepare(sql: query)
 ///
-///     let indexName = statement.bind(parameterIndexBy: "userName")
-///     let indexAge = statement.bind(parameterIndexBy: "userAge")
+///     let indexName = statement.bind(parameterIndexBy: ":userName")
+///     let indexAge = statement.bind(parameterIndexBy: ":userAge")
 ///
 ///     try statement.bind("Jane Doe", at: indexName)
 ///     try statement.bind(25, at: indexAge)
@@ -118,8 +118,8 @@ let SQLITE_TRANSIENT = unsafeBitCast(
 ///     """
 ///     let statement = try connection.prepare(sql: query)
 ///
-///     let indexName = statement.bind(parameterIndexBy: "userName")
-///     let indexAge = statement.bind(parameterIndexBy: "userAge")
+///     let indexName = statement.bind(parameterIndexBy: ":userName")
+///     let indexAge = statement.bind(parameterIndexBy: ":userAge")
 ///
 ///     try statement.bind("Jane Doe", at: indexName)
 ///     try statement.bind(25, at: indexAge)
