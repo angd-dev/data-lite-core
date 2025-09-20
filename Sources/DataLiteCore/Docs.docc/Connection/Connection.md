@@ -242,11 +242,6 @@ on an attached database. If omitted, they apply to the main database.
 - ``init(location:options:)``
 - ``init(path:options:)``
 
-### Delegation
-
-- ``ConnectionDelegate``
-- ``delegate``
-
 ### Connection State
 
 - ``isAutocommit``
@@ -260,6 +255,11 @@ on an attached database. If omitted, they apply to the main database.
 - ``journalMode``
 - ``synchronous``
 - ``userVersion``
+
+### Delegation
+
+- ``addDelegate(_:)``
+- ``removeDelegate(_:)``
 
 ### SQLite Lifecycle
 

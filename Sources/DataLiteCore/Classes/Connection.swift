@@ -5,10 +5,7 @@ public final class Connection: ConnectionProtocol {
     // MARK: - Private Properties
     
     private let connection: OpaquePointer
-    
-    // MARK: - Delegation
-    
-    public weak var delegate: (any ConnectionDelegate)?
+    fileprivate var delegates = [DelegateBox]()
     
     // MARK: - Connection State
     
@@ -61,6 +58,17 @@ public final class Connection: ConnectionProtocol {
         sqlite3_close_v2(connection)
     }
     
+    // MARK: - Delegation
+    
+    public func addDelegate(_ delegate: ConnectionDelegate) {
+        delegates.removeAll { $0.delegate == nil }
+        delegates.append(.init(delegate: delegate))
+    }
+    
+    public func removeDelegate(_ delegate: ConnectionDelegate) {
+        delegates.removeAll { $0.delegate == nil || $0.delegate === delegate }
+    }
+    
     // MARK: - Custom SQL Functions
     
     public func add(function: Function.Type) throws(Error) {
@@ -111,6 +119,16 @@ public final class Connection: ConnectionProtocol {
     }
 }
 
+fileprivate extension Connection {
+    class DelegateBox {
+        weak var delegate: ConnectionDelegate?
+        
+        init(delegate: ConnectionDelegate? = nil) {
+            self.delegate = delegate
+        }
+    }
+}
+
 // MARK: - Functions
 
 private func traceCallback(
@@ -124,16 +142,18 @@ private func traceCallback(
         .fromOpaque(ctx)
         .takeUnretainedValue()
     
-    if let delegate = connection.delegate {
-        guard let stmt = OpaquePointer(p),
-              let pSql = sqlite3_expanded_sql(stmt),
-              let xSql = x?.assumingMemoryBound(to: CChar.self)
-        else { return SQLITE_OK }
-        
-        let pSqlString = String(cString: pSql)
-        let xSqlString = String(cString: xSql)
-        let trace = (xSqlString, pSqlString)
-        delegate.connection(connection, trace: trace)
+    guard !connection.delegates.isEmpty,
+          let stmt = OpaquePointer(p),
+          let pSql = sqlite3_expanded_sql(stmt),
+          let xSql = x?.assumingMemoryBound(to: CChar.self)
+    else { return SQLITE_OK }
+    
+    let pSqlString = String(cString: pSql)
+    let xSqlString = String(cString: xSql)
+    let trace = (xSqlString, pSqlString)
+    
+    for box in connection.delegates {
+        box.delegate?.connection(connection, trace: trace)
     }
     
     return SQLITE_OK
@@ -151,7 +171,7 @@ private func updateHookCallback(
         .fromOpaque(ctx)
         .takeUnretainedValue()
     
-    if let delegate = connection.delegate {
+    if !connection.delegates.isEmpty {
         guard let dName = dName, let tName = tName else { return }
         
         let dbName = String(cString: dName)
@@ -169,18 +189,21 @@ private func updateHookCallback(
             return
         }
         
-        delegate.connection(connection, didUpdate: updateAction)
+        for box in connection.delegates {
+            box.delegate?.connection(connection, didUpdate: updateAction)
+        }
     }
 }
 
 private func commitHookCallback(_ ctx: UnsafeMutableRawPointer?) -> Int32 {
+    guard let ctx = ctx else { return SQLITE_OK }
+    let connection = Unmanaged<Connection>
+        .fromOpaque(ctx)
+        .takeUnretainedValue()
+    
     do {
-        guard let ctx = ctx else { return SQLITE_OK }
-        let connection = Unmanaged<Connection>
-            .fromOpaque(ctx)
-            .takeUnretainedValue()
-        if let delegate = connection.delegate {
-            try delegate.connectionDidCommit(connection)
+        for box in connection.delegates {
+            try box.delegate?.connectionDidCommit(connection)
         }
         return SQLITE_OK
     } catch {
@@ -193,7 +216,8 @@ private func rollbackHookCallback(_ ctx: UnsafeMutableRawPointer?) {
     let connection = Unmanaged<Connection>
         .fromOpaque(ctx)
         .takeUnretainedValue()
-    if let delegate = connection.delegate {
-        delegate.connectionDidRollback(connection)
+    
+    for box in connection.delegates {
+        box.delegate?.connectionDidRollback(connection)
     }
 }

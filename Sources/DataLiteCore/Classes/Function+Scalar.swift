@@ -201,6 +201,7 @@ private func xFunc(
         let description = error.localizedDescription
         let message = "Error executing function '\(name)': \(description)"
         sqlite3_result_error(ctx, message, -1)
+        sqlite3_result_error_code(ctx, SQLITE_ERROR)
     }
 }
 
