@@ -15,11 +15,6 @@ import DataLiteC
 ///
 /// ## Topics
 ///
-/// ### Delegation
-///
-/// - ``ConnectionDelegate``
-/// - ``delegate``
-///
 /// ### Connection State
 ///
 /// - ``isAutocommit``
@@ -33,6 +28,11 @@ import DataLiteC
 /// - ``journalMode``
 /// - ``synchronous``
 /// - ``userVersion``
+///
+/// ### Delegation
+///
+/// - ``addDelegate(_:)``
+/// - ``removeDelegate(_:)``
 ///
 /// ### SQLite Lifecycle
 ///
@@ -70,15 +70,6 @@ import DataLiteC
 /// - ``apply(_:name:)``
 /// - ``rekey(_:name:)``
 public protocol ConnectionProtocol: AnyObject {
-    // MARK: - Delegation
-    
-    /// An optional delegate to receive connection-related events and callbacks.
-    ///
-    /// The delegate allows external objects to monitor or respond to events
-    /// occurring during the lifetime of the connection, such as errors,
-    /// transaction commits, or other significant state changes.
-    var delegate: ConnectionDelegate? { get set }
-    
     // MARK: - Connection State
     
     /// Indicates whether the database connection is in autocommit mode.
@@ -161,6 +152,18 @@ public protocol ConnectionProtocol: AnyObject {
     ///
     /// - SeeAlso: [PRAGMA user_version](https://www.sqlite.org/pragma.html#pragma_user_version)
     var userVersion: Int32 { get set }
+    
+    // MARK: - Delegation
+    
+    /// Adds a delegate to receive connection events.
+    ///
+    /// - Parameter delegate: The delegate to add.
+    func addDelegate(_ delegate: ConnectionDelegate)
+    
+    /// Removes a delegate from receiving connection events.
+    ///
+    /// - Parameter delegate: The delegate to remove.
+    func removeDelegate(_ delegate: ConnectionDelegate)
     
     // MARK: - SQLite Lifecycle
     

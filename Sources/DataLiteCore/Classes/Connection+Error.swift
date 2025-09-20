@@ -21,26 +21,26 @@ extension Connection {
     /// - ``init(code:message:)``
     public struct Error: Swift.Error, Equatable, CustomStringConvertible {
         // MARK: - Properties
-
+        
         /// The database engine error code.
         ///
         /// This code indicates the specific error returned by SQLite during an operation.
         /// For a full list of possible error codes, see:
         /// [SQLite Result and Error Codes](https://www.sqlite.org/rescode.html).
         public let code: Int32
-
+        
         /// A human-readable error message describing the failure.
         public let message: String
-
+        
         /// A textual representation of the error.
         ///
         /// Combines the error code and message into a single descriptive string.
         public var description: String {
             "Connection.Error code: \(code) message: \(message)"
         }
-
+        
         // MARK: - Initialization
-
+        
         /// Creates an error with the given code and message.
         ///
         /// - Parameters:
@@ -50,7 +50,7 @@ extension Connection {
             self.code = code
             self.message = message
         }
-
+        
         /// Creates an error by extracting details from a SQLite connection.
         ///
         /// - Parameter connection: A pointer to the SQLite connection.

@@ -683,46 +683,20 @@ public final class Statement: Equatable, Hashable {
 
 // MARK: - Functions
 
-/// Binds a string to a parameter in an SQL statement.
-///
-/// - Parameters:
-///   - stmt: A pointer to the prepared SQL statement.
-///   - index: The index of the parameter (1-based).
-///   - string: The string to be bound to the parameter.
-/// - Returns: SQLite error code if binding fails.
 private func sqlite3_bind_text(_ stmt: OpaquePointer!, _ index: Int32, _ string: String) -> Int32 {
     sqlite3_bind_text(stmt, index, string, -1, SQLITE_TRANSIENT)
 }
 
-/// Binds binary data to a parameter in an SQL statement.
-///
-/// - Parameters:
-///   - stmt: A pointer to the prepared SQL statement.
-///   - index: The index of the parameter (1-based).
-///   - data: The `Data` to be bound to the parameter.
-/// - Returns: SQLite error code if binding fails.
 private func sqlite3_bind_blob(_ stmt: OpaquePointer!, _ index: Int32, _ data: Data) -> Int32 {
     data.withUnsafeBytes {
         sqlite3_bind_blob(stmt, index, $0.baseAddress, Int32($0.count), SQLITE_TRANSIENT)
     }
 }
 
-/// Retrieves text data from a result column of an SQL statement.
-///
-/// - Parameters:
-///   - stmt: A pointer to the prepared SQL statement.
-///   - iCol: The column index.
-/// - Returns: A `String` containing the text data from the specified column.
 private func sqlite3_column_text(_ stmt: OpaquePointer!, _ iCol: Int32) -> String {
     String(cString: DataLiteC.sqlite3_column_text(stmt, iCol))
 }
 
-/// Retrieves binary data from a result column of an SQL statement.
-///
-/// - Parameters:
-///   - stmt: A pointer to the prepared SQL statement.
-///   - iCol: The column index.
-/// - Returns: A `Data` object containing the binary data from the specified column.
 private func sqlite3_column_blob(_ stmt: OpaquePointer!, _ iCol: Int32) -> Data {
     Data(
         bytes: sqlite3_column_blob(stmt, iCol),
