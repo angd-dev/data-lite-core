@@ -19,7 +19,7 @@ import Foundation
 ///
 /// - ``ConnectionDelegate/connection(_:trace:)``
 /// - ``ConnectionDelegate/connection(_:didUpdate:)``
-/// - ``ConnectionDelegate/connectionDidCommit(_:)``
+/// - ``ConnectionDelegate/connectionWillCommit(_:)``
 /// - ``ConnectionDelegate/connectionDidRollback(_:)``
 public protocol ConnectionDelegate: AnyObject {
     /// Informs the delegate that a SQL statement is being traced.
@@ -101,7 +101,7 @@ public protocol ConnectionDelegate: AnyObject {
     /// You can implement this method to perform actions after a successful commit:
     ///
     /// ```swift
-    /// func connectionDidCommit(_ connection: Connection) throws {
+    /// func connectionWillCommit(_ connection: Connection) throws {
     ///     print("Transaction committed successfully.")
     /// }
     /// ```
@@ -109,7 +109,7 @@ public protocol ConnectionDelegate: AnyObject {
     /// - Important: Be cautious when implementing this method. If it performs heavy operations,
     ///   it could delay the commit process. It is advisable to keep the implementation lightweight
     ///   to maintain optimal performance and responsiveness.
-    func connectionDidCommit(_ connection: Connection) throws
+    func connectionWillCommit(_ connection: Connection) throws
     
     /// Informs the delegate that a transaction has been rolled back.
     ///
@@ -153,13 +153,13 @@ public extension ConnectionDelegate {
     ///   - action: The type of update action that occurred.
     func connection(_ connection: Connection, didUpdate action: SQLiteAction) {}
     
-    /// Default implementation of the `connectionDidCommit(_:)` method.
+    /// Default implementation of the `connectionWillCommit(_:)` method.
     ///
     /// This default implementation does nothing.
     ///
     /// - Parameter connection: The `Connection` instance where the transaction was committed.
     /// - Throws: May throw an error to abort the commit process.
-    func connectionDidCommit(_ connection: Connection) throws {}
+    func connectionWillCommit(_ connection: Connection) throws {}
     
     /// Default implementation of the `connectionDidRollback(_:)` method.
     ///
