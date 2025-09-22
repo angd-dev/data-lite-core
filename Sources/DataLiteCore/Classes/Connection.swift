@@ -203,7 +203,7 @@ private func commitHookCallback(_ ctx: UnsafeMutableRawPointer?) -> Int32 {
     
     do {
         for box in connection.delegates {
-            try box.delegate?.connectionDidCommit(connection)
+            try box.delegate?.connectionWillCommit(connection)
         }
         return SQLITE_OK
     } catch {
