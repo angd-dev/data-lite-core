@@ -1,27 +1,20 @@
 import Foundation
-import DataLiteC
 
-/// A protocol that defines the interface for a database connection.
+/// A protocol that defines an SQLite database connection.
 ///
-/// This protocol specifies the requirements for managing a connection
-/// to an SQLite database, including connection state, configuration via PRAGMA,
-/// executing SQL statements and scripts, transaction control, and encryption support.
-///
-/// It also includes support for delegation to handle connection-related events.
-///
-/// ## See Also
-///
-/// - ``Connection``
+/// The `ConnectionProtocol` defines the essential API for managing a database connection,
+/// including configuration, statement preparation, transactions, encryption, and delegation.
+/// Conforming types are responsible for maintaining the connection’s lifecycle and settings.
 ///
 /// ## Topics
 ///
-/// ### Connection State
+/// ### Managing Connection State
 ///
 /// - ``isAutocommit``
 /// - ``isReadonly``
 /// - ``busyTimeout``
 ///
-/// ### PRAGMA Accessors
+/// ### Accessing PRAGMA Values
 ///
 /// - ``applicationID``
 /// - ``foreignKeys``
@@ -29,276 +22,376 @@ import DataLiteC
 /// - ``synchronous``
 /// - ``userVersion``
 ///
-/// ### Delegation
-///
-/// - ``addDelegate(_:)``
-/// - ``removeDelegate(_:)``
-///
-/// ### SQLite Lifecycle
+/// ### Managing SQLite Lifecycle
 ///
 /// - ``initialize()``
 /// - ``shutdown()``
 ///
-/// ### Custom SQL Functions
+/// ### Handling Encryption
+///
+/// - ``apply(_:name:)``
+/// - ``rekey(_:name:)``
+///
+/// ### Managing Delegates
+///
+/// - ``add(delegate:)``
+/// - ``remove(delegate:)``
+/// - ``add(trace:)``
+/// - ``remove(trace:)``
+///
+/// ### Registering Custom SQL Functions
 ///
 /// - ``add(function:)``
 /// - ``remove(function:)``
 ///
-/// ### Statement Preparation
+/// ### Preparing SQL Statements
 ///
+/// - ``prepare(sql:)``
 /// - ``prepare(sql:options:)``
 ///
-/// ### Script Execution
+/// ### Executing SQL Commands
 ///
-/// - ``execute(sql:)``
 /// - ``execute(raw:)``
+/// - ``execute(sql:)``
 ///
-/// ### PRAGMA Execution
+/// ### Controlling PRAGMA Settings
 ///
 /// - ``get(pragma:)``
 /// - ``set(pragma:value:)``
 ///
-/// ### Transactions
+/// ### Managing Transactions
 ///
 /// - ``beginTransaction(_:)``
 /// - ``commitTransaction()``
 /// - ``rollbackTransaction()``
-///
-/// ### Encryption Keys
-///
-/// - ``Connection/Key``
-/// - ``apply(_:name:)``
-/// - ``rekey(_:name:)``
 public protocol ConnectionProtocol: AnyObject {
     // MARK: - Connection State
     
-    /// Indicates whether the database connection is in autocommit mode.
+    /// The autocommit state of the connection.
     ///
-    /// Autocommit mode is enabled by default. It remains enabled as long as no
-    /// explicit transactions are active. Executing `BEGIN` disables autocommit mode,
-    /// and executing `COMMIT` or `ROLLBACK` re-enables it.
+    /// Autocommit is enabled by default and remains active when no explicit transaction is open.
+    /// Executing `BEGIN` disables autocommit, while `COMMIT` or `ROLLBACK` re-enables it.
     ///
-    /// - Returns: `true` if the connection is in autocommit mode; otherwise, `false`.
-    /// - SeeAlso: [sqlite3_get_autocommit()](https://sqlite.org/c3ref/get_autocommit.html)
+    /// - Returns: `true` if autocommit mode is active; otherwise, `false`.
+    /// - SeeAlso: [Test For Auto-Commit Mode](https://sqlite.org/c3ref/get_autocommit.html)
     var isAutocommit: Bool { get }
     
-    /// Indicates whether the database connection is read-only.
+    /// The read-only state of the connection.
     ///
-    /// This property reflects the access mode of the main database for the connection.
-    /// It returns `true` if the database was opened with read-only access,
-    /// and `false` if it allows read-write access.
+    /// Returns `true` if the main database allows only read operations, or `false` if it permits
+    /// both reading and writing.
     ///
-    /// - Returns: `true` if the main database is read-only; otherwise, `false`.
-    /// - SeeAlso: [sqlite3_db_readonly()](https://www.sqlite.org/c3ref/db_readonly.html)
+    /// - Returns: `true` if the connection is read-only; otherwise, `false`.
+    /// - SeeAlso: [Determine if a database is read-only](https://sqlite.org/c3ref/db_readonly.html)
     var isReadonly: Bool { get }
     
-    /// The busy timeout duration in milliseconds for the database connection.
+    /// The busy timeout of the connection, in milliseconds.
     ///
-    /// This value determines how long SQLite will wait for a locked database to become available
-    /// before returning a `SQLITE_BUSY` error. A value of zero disables the timeout and causes
-    /// operations to fail immediately if the database is locked.
+    /// Defines how long SQLite waits for a locked database to become available before returning
+    /// a `SQLITE_BUSY` error. A value of zero disables the timeout, causing operations to fail
+    /// immediately if the database is locked.
     ///
-    /// - SeeAlso: [sqlite3_busy_timeout()](https://www.sqlite.org/c3ref/busy_timeout.html)
+    /// - SeeAlso: [Set A Busy Timeout](https://sqlite.org/c3ref/busy_timeout.html)
     var busyTimeout: Int32 { get set }
     
     // MARK: - PRAGMA Accessors
     
-    /// The application ID stored in the database header.
+    /// The application identifier stored in the database header.
     ///
-    /// This 32-bit integer is used to identify the application that created or manages the database.
-    /// It is stored at a fixed offset within the database file header and can be read or modified
-    /// using the `application_id` pragma.
+    /// Used to distinguish database files created by different applications or file formats. This
+    /// value is a 32-bit integer written to the database header and can be queried or modified
+    /// through the `PRAGMA application_id` command.
     ///
-    /// - SeeAlso: [PRAGMA application_id](https://www.sqlite.org/pragma.html#pragma_application_id)
+    /// - SeeAlso: [Application ID](https://sqlite.org/pragma.html#pragma_application_id)
     var applicationID: Int32 { get set }
     
-    /// Indicates whether foreign key constraints are enforced.
+    /// The foreign key enforcement state of the connection.
     ///
-    /// This property enables or disables enforcement of foreign key constraints
-    /// by the database connection. When set to `true`, constraints are enforced;
-    /// when `false`, they are ignored.
+    /// When enabled, SQLite enforces foreign key constraints on all tables. This behavior can be
+    /// controlled with `PRAGMA foreign_keys`.
     ///
-    /// - SeeAlso: [PRAGMA foreign_keys](https://www.sqlite.org/pragma.html#pragma_foreign_keys)
+    /// - SeeAlso: [Foreign Keys](https://sqlite.org/pragma.html#pragma_foreign_keys)
     var foreignKeys: Bool { get set }
     
     /// The journal mode used by the database connection.
     ///
-    /// The journal mode determines how SQLite manages rollback journals,
-    /// impacting durability, concurrency, and performance.
+    /// Determines how SQLite maintains the rollback journal for transactions.
     ///
-    /// Setting this property updates the journal mode using the corresponding SQLite PRAGMA.
-    ///
-    /// - SeeAlso: [PRAGMA journal_mode](https://www.sqlite.org/pragma.html#pragma_journal_mode)
+    /// - SeeAlso: [Journal Mode](https://sqlite.org/pragma.html#pragma_journal_mode)
     var journalMode: JournalMode { get set }
     
-    /// The synchronous mode used by the database connection.
+    /// The synchronization mode for database writes.
     ///
-    /// This property controls how rigorously SQLite waits for data to be
-    /// physically written to disk, influencing durability and performance.
+    /// Controls how aggressively SQLite syncs data to disk for durability versus performance.
     ///
-    /// Setting this property updates the synchronous mode using the
-    /// corresponding SQLite PRAGMA.
-    ///
-    /// - SeeAlso: [PRAGMA synchronous](https://www.sqlite.org/pragma.html#pragma_synchronous)
+    /// - SeeAlso: [Synchronous](https://sqlite.org/pragma.html#pragma_synchronous)
     var synchronous: Synchronous { get set }
     
-    /// The user version number stored in the database.
+    /// The user-defined schema version number.
     ///
-    /// This 32-bit integer is stored as the `user_version` pragma and
-    /// is typically used by applications to track the schema version
-    /// or migration state of the database.
+    /// This value is stored in the database header and can be used by applications to track schema
+    /// migrations or format changes.
     ///
-    /// Setting this property updates the corresponding SQLite PRAGMA.
-    ///
-    /// - SeeAlso: [PRAGMA user_version](https://www.sqlite.org/pragma.html#pragma_user_version)
+    /// - SeeAlso: [User Version](https://sqlite.org/pragma.html#pragma_user_version)
     var userVersion: Int32 { get set }
-    
-    // MARK: - Delegation
-    
-    /// Adds a delegate to receive connection events.
-    ///
-    /// - Parameter delegate: The delegate to add.
-    func addDelegate(_ delegate: ConnectionDelegate)
-    
-    /// Removes a delegate from receiving connection events.
-    ///
-    /// - Parameter delegate: The delegate to remove.
-    func removeDelegate(_ delegate: ConnectionDelegate)
     
     // MARK: - SQLite Lifecycle
     
     /// Initializes the SQLite library.
     ///
-    /// This method sets up the global state required by SQLite. It must be called before using
-    /// any other SQLite interface, unless SQLite is initialized automatically.
+    /// Sets up the global state required by SQLite, including operating-system–specific
+    /// initialization. This function must be called before using any other SQLite API,
+    /// unless the library is initialized automatically.
     ///
-    /// A successful call has an effect only the first time it is invoked during the lifetime of
-    /// the process, or the first time after a call to ``shutdown()``. All other calls are no-ops.
+    /// Only the first invocation during the process lifetime, or the first after
+    /// ``shutdown()``, performs real initialization. All subsequent calls are no-ops.
     ///
-    /// - Throws: ``Connection/Error`` if the initialization fails.
-    /// - SeeAlso: [sqlite3_initialize()](https://www.sqlite.org/c3ref/initialize.html)
-    static func initialize() throws(Connection.Error)
-
+    /// - Note: Workstation applications normally do not need to call this function explicitly,
+    ///   as it is invoked automatically by interfaces such as `sqlite3_open()`. It is mainly
+    ///   intended for embedded systems and controlled initialization scenarios.
+    ///
+    /// - Throws: ``SQLiteError`` if initialization fails.
+    /// - SeeAlso: [Initialize The SQLite Library](https://sqlite.org/c3ref/initialize.html)
+    static func initialize() throws(SQLiteError)
+    
     /// Shuts down the SQLite library.
     ///
-    /// This method releases global resources used by SQLite and reverses the effects of a successful
-    /// call to ``initialize()``. It must be called exactly once for each successful call to
-    /// ``initialize()``, and only after all database connections are closed.
+    /// Releases all global resources allocated by SQLite and undoes the effects of a
+    /// successful call to ``initialize()``. This function should be called exactly once
+    /// for each effective initialization and only after all database connections are closed.
     ///
-    /// - Throws: ``Connection/Error`` if the shutdown process fails.
-    /// - SeeAlso: [sqlite3_shutdown()](https://www.sqlite.org/c3ref/initialize.html)
-    static func shutdown() throws(Connection.Error)
+    /// Only the first invocation since the last call to ``initialize()`` performs
+    /// deinitialization. All other calls are harmless no-ops.
+    ///
+    /// - Note: Workstation applications normally do not need to call this function explicitly,
+    ///   as cleanup happens automatically at process termination. It is mainly used in
+    ///   embedded systems where precise resource control is required.
+    ///
+    /// - Important: This function is **not** threadsafe and must be called from a single thread.
+    /// - Throws: ``SQLiteError`` if the shutdown process fails.
+    /// - SeeAlso: [Initialize The SQLite Library](https://sqlite.org/c3ref/initialize.html)
+    static func shutdown() throws(SQLiteError)
+    
+    // MARK: - Encryption
+    
+    /// Applies an encryption key to a database connection.
+    ///
+    /// If the database is newly created, this call initializes encryption and makes it encrypted.
+    /// If the database already exists, this call decrypts its contents for access using the
+    /// provided key. An existing unencrypted database cannot be encrypted using this method.
+    ///
+    /// This function must be called immediately after the connection is opened and before invoking
+    /// any other operation on the same connection.
+    ///
+    /// - Parameters:
+    ///   - key: The encryption key to apply.
+    ///   - name: The database name, or `nil` for the main database.
+    /// - Throws: ``SQLiteError`` if the key is invalid or the decryption process fails.
+    /// - SeeAlso: [Setting The Key](https://www.zetetic.net/sqlcipher/sqlcipher-api/#key)
+    func apply(_ key: Connection.Key, name: String?) throws(SQLiteError)
+    
+    /// Changes the encryption key for an open database.
+    ///
+    /// Re-encrypts the database file with a new key while preserving its existing data. The
+    /// connection must already be open and unlocked with a valid key applied through
+    /// ``apply(_:name:)``. This operation replaces the current encryption key but does not modify
+    /// the database contents.
+    ///
+    /// This function can only be used with an encrypted database. It has no effect on unencrypted
+    /// databases.
+    ///
+    /// - Parameters:
+    ///   - key: The new encryption key to apply.
+    ///   - name: The database name, or `nil` for the main database.
+    /// - Throws: ``SQLiteError`` if rekeying fails or encryption is not supported.
+    /// - SeeAlso: [Changing The Key](https://www.zetetic.net/sqlcipher/sqlcipher-api/#Changing_Key)
+    func rekey(_ key: Connection.Key, name: String?) throws(SQLiteError)
+    
+    // MARK: - Delegation
+    
+    /// Adds a delegate to receive connection-level events.
+    ///
+    /// Registers an object conforming to ``ConnectionDelegate`` to receive notifications such as
+    /// update actions and transaction events.
+    ///
+    /// - Parameter delegate: The delegate to add.
+    func add(delegate: ConnectionDelegate)
+    
+    /// Removes a previously added delegate.
+    ///
+    /// Unregisters an object that was previously added with ``add(delegate:)`` so it no longer
+    /// receives update and transaction events.
+    ///
+    /// - Parameter delegate: The delegate to remove.
+    func remove(delegate: ConnectionDelegate)
+    
+    /// Adds a delegate to receive SQL trace callbacks.
+    ///
+    /// Registers an object conforming to ``ConnectionTraceDelegate`` to observe SQL statements as
+    /// they are executed by the connection.
+    ///
+    /// - Parameter delegate: The trace delegate to add.
+    func add(trace delegate: ConnectionTraceDelegate)
+    
+    /// Removes a previously added trace delegate.
+    ///
+    /// Unregisters an object that was previously added with ``add(trace:)`` so it no longer
+    /// receives SQL trace callbacks.
+    ///
+    /// - Parameter delegate: The trace delegate to remove.
+    func remove(trace delegate: ConnectionTraceDelegate)
     
     // MARK: - Custom SQL Functions
     
-    /// Registers a custom SQL function with the connection.
+    /// Registers a custom SQLite function with the current connection.
     ///
-    /// This allows adding user-defined functions callable from SQL queries.
+    /// The specified function type must be a subclass of ``Function/Scalar`` or
+    /// ``Function/Aggregate``. Once registered, the function becomes available in SQL queries
+    /// executed through this connection.
     ///
-    /// - Parameter function: The type of the custom SQL function to add.
-    /// - Throws: ``Connection/Error`` if the function registration fails.
-    func add(function: Function.Type) throws(Connection.Error)
+    /// - Parameter function: The custom function type to register.
+    /// - Throws: ``SQLiteError`` if registration fails.
+    func add(function: Function.Type) throws(SQLiteError)
     
-    /// Removes a previously registered custom SQL function from the connection.
+    /// Unregisters a previously registered custom SQLite function.
     ///
-    /// - Parameter function: The type of the custom SQL function to remove.
-    /// - Throws: ``Connection/Error`` if the function removal fails.
-    func remove(function: Function.Type) throws(Connection.Error)
+    /// The specified function type must match the one used during registration. After removal,
+    /// the function will no longer be available for use in SQL statements.
+    ///
+    /// - Parameter function: The custom function type to unregister.
+    /// - Throws: ``SQLiteError`` if the function could not be unregistered.
+    func remove(function: Function.Type) throws(SQLiteError)
     
     // MARK: - Statement Preparation
     
     /// Prepares an SQL statement for execution.
     ///
-    /// Compiles the provided SQL query into a ``Statement`` object that can be executed or stepped through.
+    /// Compiles the provided SQL query into a prepared statement associated with this connection.
+    /// Use the returned statement to bind parameters and execute queries safely and efficiently.
+    ///
+    /// - Parameter query: The SQL query to prepare.
+    /// - Returns: A compiled statement ready for execution.
+    /// - Throws: ``SQLiteError`` if the statement could not be prepared.
+    ///
+    /// - SeeAlso: [Compiling An SQL Statement](https://sqlite.org/c3ref/prepare.html)
+    func prepare(sql query: String) throws(SQLiteError) -> StatementProtocol
+    
+    /// Prepares an SQL statement with custom compilation options.
+    ///
+    /// Similar to ``prepare(sql:)`` but allows specifying additional compilation flags through
+    /// ``Statement/Options`` to control statement creation behavior.
     ///
     /// - Parameters:
-    ///   - query: The SQL query string to prepare.
-    ///   - options: Options that affect statement preparation.
-    /// - Returns: A prepared ``Statement`` ready for execution.
-    /// - Throws: ``Connection/Error`` if statement preparation fails.
-    /// - SeeAlso: [sqlite3_prepare_v3()](https://www.sqlite.org/c3ref/prepare.html)
-    func prepare(sql query: String, options: Statement.Options) throws(Connection.Error) -> Statement
-    
-    // MARK: - Script Execution
-    
-    /// Executes a sequence of SQL statements.
+    ///   - query: The SQL query to prepare.
+    ///   - options: Additional compilation options.
+    /// - Returns: A compiled statement ready for execution.
+    /// - Throws: ``SQLiteError`` if the statement could not be prepared.
     ///
-    /// Processes the given SQL script by executing each individual statement in order.
-    ///
-    /// - Parameter script: A collection of SQL statements to execute.
-    /// - Throws: ``Connection/Error`` if any statement execution fails.
-    func execute(sql script: SQLScript) throws(Connection.Error)
+    /// - SeeAlso: [Compiling An SQL Statement](https://sqlite.org/c3ref/prepare.html)
+    func prepare(
+        sql query: String, options: Statement.Options
+    ) throws(SQLiteError) -> StatementProtocol
     
-    /// Executes a raw SQL string.
-    ///
-    /// Executes the provided raw SQL string as a single operation.
-    ///
-    /// - Parameter sql: The raw SQL string to execute.
-    /// - Throws: ``Connection/Error`` if the execution fails.
-    func execute(raw sql: String) throws(Connection.Error)
+    // MARK: - SQL Execution
     
-    // MARK: - PRAGMA Execution
-    
-    /// Retrieves the value of a PRAGMA setting from the database.
+    /// Executes one or more SQL statements in a single step.
     ///
-    /// - Parameter pragma: The PRAGMA setting to retrieve.
-    /// - Returns: The current value of the PRAGMA, or `nil` if the value is not available.
-    /// - Throws: ``Connection/Error`` if the operation fails.
-    func get<T: SQLiteRawRepresentable>(pragma: Pragma) throws(Connection.Error) -> T?
+    /// The provided SQL string may contain one or more statements separated by semicolons.
+    /// Each statement is compiled and executed sequentially within the current connection.
+    /// This method is suitable for operations that do not produce result sets, such as
+    /// `CREATE TABLE`, `INSERT`, `UPDATE`, or `PRAGMA`.
+    ///
+    /// Execution stops at the first error, and the corresponding ``SQLiteError`` is thrown.
+    ///
+    /// - Parameter sql: The SQL text containing one or more statements to execute.
+    /// - Throws: ``SQLiteError`` if any statement fails to execute.
+    ///
+    /// - SeeAlso: [One-Step Query Execution Interface](https://sqlite.org/c3ref/exec.html)
+    func execute(raw sql: String) throws(SQLiteError)
     
-    /// Sets the value of a PRAGMA setting in the database.
+    /// Executes multiple SQL statements from a script.
+    ///
+    /// The provided ``SQLScript`` may contain one or more SQL statements separated by semicolons.
+    /// Each statement is executed sequentially using the current connection. This is useful for
+    /// running migration scripts or initializing database schemas.
+    ///
+    /// - Parameter script: The SQL script to execute.
+    /// - Throws: ``SQLiteError`` if any statement in the script fails.
+    func execute(sql script: SQLScript) throws(SQLiteError)
+    
+    // MARK: - PRAGMA Control
+    
+    /// Reads the current value of a database PRAGMA.
+    ///
+    /// Retrieves the value of the specified PRAGMA and attempts to convert it to the provided
+    /// generic type `T`. This method is typically used for reading configuration or status values
+    /// such as `journal_mode`, `foreign_keys`, or `user_version`.
+    ///
+    /// If the PRAGMA query succeeds but the value cannot be converted to the requested type,
+    /// the method returns `nil` instead of throwing an error.
+    ///
+    /// - Parameter pragma: The PRAGMA to query.
+    /// - Returns: The current PRAGMA value, or `nil` if the result is empty or conversion fails.
+    /// - Throws: ``SQLiteError`` if the PRAGMA query itself fails.
+    ///
+    /// - SeeAlso: [PRAGMA Statements](https://sqlite.org/pragma.html)
+    func get<T: SQLiteRepresentable>(pragma: Pragma) throws(SQLiteError) -> T?
+    
+    /// Sets a database PRAGMA value.
+    ///
+    /// Assigns the specified value to the given PRAGMA. This can be used to change runtime
+    /// configuration parameters, such as `foreign_keys`, `journal_mode`, or `synchronous`.
     ///
     /// - Parameters:
-    ///   - pragma: The PRAGMA setting to modify.
-    ///   - value: The new value to assign to the PRAGMA.
-    /// - Returns: The resulting value after the assignment, or `nil` if unavailable.
-    /// - Throws: ``Connection/Error`` if the operation fails.
-    @discardableResult
-    func set<T: SQLiteRawRepresentable>(pragma: Pragma, value: T) throws(Connection.Error) -> T?
+    ///   - pragma: The PRAGMA to set.
+    ///   - value: The value to assign to the PRAGMA.
+    /// - Throws: ``SQLiteError`` if the assignment fails.
+    ///
+    /// - SeeAlso: [PRAGMA Statements](https://sqlite.org/pragma.html)
+    func set<T: SQLiteRepresentable>(pragma: Pragma, value: T) throws(SQLiteError)
     
     // MARK: - Transactions
     
-    /// Begins a database transaction of the specified type.
+    /// Begins a new transaction of the specified type.
     ///
-    /// - Parameter type: The type of transaction to begin (e.g., deferred, immediate, exclusive).
-    /// - Throws: ``Connection/Error`` if starting the transaction fails.
-    /// - SeeAlso: [BEGIN TRANSACTION](https://www.sqlite.org/lang_transaction.html)
-    func beginTransaction(_ type: TransactionType) throws(Connection.Error)
-    
-    /// Commits the current database transaction.
+    /// Starts an explicit transaction using the given ``TransactionType``. If a transaction is
+    /// already active, this method throws an error.
     ///
-    /// - Throws: ``Connection/Error`` if committing the transaction fails.
-    /// - SeeAlso: [COMMIT](https://www.sqlite.org/lang_transaction.html)
-    func commitTransaction() throws(Connection.Error)
-    
-    /// Rolls back the current database transaction.
+    /// - Parameter type: The transaction type to begin.
+    /// - Throws: ``SQLiteError`` if the transaction could not be started.
     ///
-    /// - Throws: ``Connection/Error`` if rolling back the transaction fails.
-    /// - SeeAlso: [ROLLBACK](https://www.sqlite.org/lang_transaction.html)
-    func rollbackTransaction() throws(Connection.Error)
+    /// - SeeAlso: [Transaction](https://sqlite.org/lang_transaction.html)
+    func beginTransaction(_ type: TransactionType) throws(SQLiteError)
     
-    // MARK: - Encryption Keys
-    
-    /// Applies an encryption key to the database connection.
+    /// Commits the current transaction.
     ///
-    /// - Parameters:
-    ///   - key: The encryption key to apply.
-    ///   - name: An optional name identifying the database to apply the key to.
-    /// - Throws: ``Connection/Error`` if applying the key fails.
-    func apply(_ key: Connection.Key, name: String?) throws(Connection.Error)
-    
-    /// Changes the encryption key for the database connection.
+    /// Makes all changes made during the transaction permanent. If no transaction is active, this
+    /// method has no effect.
     ///
-    /// - Parameters:
-    ///   - key: The new encryption key to set.
-    ///   - name: An optional name identifying the database to rekey.
-    /// - Throws: ``Connection/Error`` if rekeying fails.
-    func rekey(_ key: Connection.Key, name: String?) throws(Connection.Error)
+    /// - Throws: ``SQLiteError`` if the commit operation fails.
+    ///
+    /// - SeeAlso: [Transaction](https://sqlite.org/lang_transaction.html)
+    func commitTransaction() throws(SQLiteError)
+    
+    /// Rolls back the current transaction.
+    ///
+    /// Reverts all changes made during the transaction. If no transaction is active, this method
+    /// has no effect.
+    ///
+    /// - Throws: ``SQLiteError`` if the rollback operation fails.
+    ///
+    /// - SeeAlso: [Transaction](https://sqlite.org/lang_transaction.html)
+    func rollbackTransaction() throws(SQLiteError)
 }
 
-// MARK: - PRAGMA Accessors
+// MARK: - Default Implementation
 
 public extension ConnectionProtocol {
+    var busyTimeout: Int32 {
+        get { try! get(pragma: .busyTimeout) ?? 0 }
+        set { try! set(pragma: .busyTimeout, value: newValue) }
+    }
+    
     var applicationID: Int32 {
         get { try! get(pragma: .applicationID) ?? 0 }
         set { try! set(pragma: .applicationID, value: newValue) }
@@ -323,71 +416,40 @@ public extension ConnectionProtocol {
         get { try! get(pragma: .userVersion) ?? 0 }
         set { try! set(pragma: .userVersion, value: newValue) }
     }
-}
-
-// MARK: - SQLite Lifecycle
-
-public extension ConnectionProtocol {
-    static func initialize() throws(Connection.Error) {
-        let status = sqlite3_initialize()
-        if status != SQLITE_OK {
-            throw Connection.Error(code: status, message: "")
-        }
+    
+    func prepare(sql query: String) throws(SQLiteError) -> StatementProtocol {
+        try prepare(sql: query, options: [])
     }
     
-    static func shutdown() throws(Connection.Error) {
-        let status = sqlite3_shutdown()
-        if status != SQLITE_OK {
-            throw Connection.Error(code: status, message: "")
-        }
-    }
-}
-
-// MARK: - Script Execution
-
-public extension ConnectionProtocol {
-    func execute(sql script: SQLScript) throws(Connection.Error) {
+    func execute(sql script: SQLScript) throws(SQLiteError) {
         for query in script {
-            let stmt = try prepare(sql: query, options: [])
+            let stmt = try prepare(sql: query)
             while try stmt.step() {}
         }
     }
-}
-
-// MARK: - PRAGMA Execution
-
-public extension ConnectionProtocol {
-    func get<T: SQLiteRawRepresentable>(pragma: Pragma) throws(Connection.Error) -> T? {
-        let stmt = try prepare(sql: "PRAGMA \(pragma)", options: [])
+    
+    func get<T: SQLiteRepresentable>(pragma: Pragma) throws(SQLiteError) -> T? {
+        let stmt = try prepare(sql: "PRAGMA \(pragma)")
         switch try stmt.step() {
-        case true:  return stmt.columnValue(at: 0)
+        case true: return stmt.columnValue(at: 0)
         case false: return nil
         }
     }
     
-    @discardableResult
-    func set<T: SQLiteRawRepresentable>(pragma: Pragma, value: T) throws(Connection.Error) -> T? {
+    func set<T: SQLiteRepresentable>(pragma: Pragma, value: T) throws(SQLiteError) {
         let query = "PRAGMA \(pragma) = \(value.sqliteLiteral)"
-        let stmt = try prepare(sql: query, options: [])
-        switch try stmt.step() {
-        case true:  return stmt.columnValue(at: 0)
-        case false: return nil
-        }
+        try prepare(sql: query).step()
     }
-}
-
-// MARK: - Transactions
-
-public extension ConnectionProtocol {
-    func beginTransaction(_ type: TransactionType = .deferred) throws(Connection.Error) {
+    
+    func beginTransaction(_ type: TransactionType = .deferred) throws(SQLiteError) {
         try prepare(sql: "BEGIN \(type) TRANSACTION", options: []).step()
     }
     
-    func commitTransaction() throws(Connection.Error) {
+    func commitTransaction() throws(SQLiteError) {
         try prepare(sql: "COMMIT TRANSACTION", options: []).step()
     }
     
-    func rollbackTransaction() throws(Connection.Error) {
+    func rollbackTransaction() throws(SQLiteError) {
         try prepare(sql: "ROLLBACK TRANSACTION", options: []).step()
     }
 }

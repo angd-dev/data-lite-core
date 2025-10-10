@@ -1,37 +1,38 @@
 import Foundation
 
-extension Date: SQLiteRawRepresentable {
-    /// Provides the `SQLiteRawValue` representation for `Date` types.
+extension Date: SQLiteRepresentable {
+    /// Converts a `Date` value to its SQLite representation.
     ///
-    /// This implementation converts the `Date` value to an `SQLiteRawValue` of type `.text`.
-    /// The date is formatted as an ISO 8601 string.
+    /// Dates are stored in SQLite as text using the ISO 8601 format. This property converts the
+    /// current date into an ISO 8601 string and wraps it in an ``SQLiteValue/text(_:)`` case,
+    /// suitable for parameter binding.
     ///
-    /// - Returns: An `SQLiteRawValue` of type `.text`, containing the ISO 8601 string representation of the date.
-    public var sqliteRawValue: SQLiteRawValue {
+    /// - Returns: An ``SQLiteValue`` of type `.text`, containing the ISO 8601 string.
+    public var sqliteValue: SQLiteValue {
         let formatter = ISO8601DateFormatter()
         let dateString = formatter.string(from: self)
         return .text(dateString)
     }
     
-    /// Initializes an instance of `Date` from an `SQLiteRawValue`.
+    /// Creates a `Date` value from an SQLite representation.
     ///
-    /// This initializer handles `SQLiteRawValue` of type `.text`, converting it from an ISO 8601 string.
-    /// It also supports `.int` and `.real` types representing time intervals since 1970.
+    /// This initializer supports the following ``SQLiteValue`` cases:
+    /// - ``SQLiteValue/text(_:)`` — parses an ISO 8601 date string.
+    /// - ``SQLiteValue/int(_:)`` or ``SQLiteValue/real(_:)`` — interprets the number as a time
+    ///   interval since 1970 (UNIX timestamp).
     ///
-    /// - Parameter sqliteRawValue: The raw SQLite value used to initialize the instance.
-    public init?(_ sqliteRawValue: SQLiteRawValue) {
-        switch sqliteRawValue {
+    /// - Parameter value: The SQLite value to convert from.
+    /// - Returns: A `Date` instance if the conversion succeeds, or `nil` otherwise.
+    public init?(_ value: SQLiteValue) {
+        switch value {
         case .int(let value):
             self.init(timeIntervalSince1970: TimeInterval(value))
         case .real(let value):
             self.init(timeIntervalSince1970: value)
         case .text(let value):
             let formatter = ISO8601DateFormatter()
-            if let date = formatter.date(from: value) {
-                self = date
-            } else {
-                return nil
-            }
+            guard let date = formatter.date(from: value) else { return nil }
+            self = date
         default:
             return nil
         }

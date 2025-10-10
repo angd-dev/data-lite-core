@@ -1,25 +1,27 @@
 import Foundation
 
-public extension SQLiteRawBindable where Self: BinaryFloatingPoint {
-    /// Provides the `SQLiteRawValue` representation for floating-point types.
+public extension SQLiteBindable where Self: BinaryFloatingPoint {
+    /// Converts a floating-point value to its SQLite representation.
     ///
-    /// This implementation converts the floating-point value to a `real` SQLite raw value.
+    /// Floating-point numbers are stored in SQLite as `REAL` values. This property wraps the
+    /// current value into an ``SQLiteValue/real(_:)`` case, suitable for parameter binding.
     ///
-    /// - Returns: An `SQLiteRawValue` of type `.real`, containing the floating-point value.
-    var sqliteRawValue: SQLiteRawValue {
+    /// - Returns: An ``SQLiteValue`` of type `.real` containing the numeric value.
+    var sqliteValue: SQLiteValue {
         .real(.init(self))
     }
 }
 
-public extension SQLiteRawRepresentable where Self: BinaryFloatingPoint {
-    /// Initializes an instance of the conforming type from an `SQLiteRawValue`.
+public extension SQLiteRepresentable where Self: BinaryFloatingPoint {
+    /// Creates a floating-point value from an SQLite representation.
     ///
-    /// This initializer handles `SQLiteRawValue` of type `.real`, converting it to the floating-point value.
-    /// It also handles `SQLiteRawValue` of type `.int`, converting it to the floating-point value.
+    /// This initializer supports both ``SQLiteValue/real(_:)`` and ``SQLiteValue/int(_:)`` cases,
+    /// converting the stored number to the corresponding floating-point type.
     ///
-    /// - Parameter sqliteRawValue: The raw SQLite value used to initialize the instance.
-    init?(_ sqliteRawValue: SQLiteRawValue) {
-        switch sqliteRawValue {
+    /// - Parameter value: The SQLite value to convert from.
+    /// - Returns: A new instance if the conversion succeeds, or `nil` if the value is incompatible.
+    init?(_ value: SQLiteValue) {
+        switch value {
         case .int(let value):
             self.init(Double(value))
         case .real(let value):
@@ -30,5 +32,5 @@ public extension SQLiteRawRepresentable where Self: BinaryFloatingPoint {
     }
 }
 
-extension Float: SQLiteRawRepresentable {}
-extension Double: SQLiteRawRepresentable {}
+extension Float: SQLiteRepresentable {}
+extension Double: SQLiteRepresentable {}

@@ -1,40 +1,34 @@
 import Foundation
 
-/// Represents different types of database update actions.
+/// Represents a type of database change operation.
 ///
-/// The `SQLiteAction` enum is used to identify the type of action
-/// performed on a database, such as insertion, updating, or deletion.
+/// The `SQLiteAction` enumeration describes an action that modifies a database table. It
+/// distinguishes between row insertions, updates, and deletions, providing context such
+/// as the database name, table, and affected row ID.
+///
+/// - SeeAlso: [Data Change Notification Callbacks](https://sqlite.org/c3ref/update_hook.html)
 public enum SQLiteAction {
-    /// Indicates the insertion of a new row into a table.
-    ///
-    /// This case is used to represent the action of adding a new
-    /// row to a specific table in a database.
+    /// A new row was inserted into a table.
     ///
     /// - Parameters:
-    ///     - db: The name of the database where the insertion occurred.
-    ///     - table: The name of the table where the insertion occurred.
-    ///     - rowID: The row ID of the newly inserted row.
+    ///   - db: The name of the database where the insertion occurred.
+    ///   - table: The name of the table into which the row was inserted.
+    ///   - rowID: The row ID of the newly inserted row.
     case insert(db: String, table: String, rowID: Int64)
     
-    /// Indicates the modification of an existing row in a table.
-    ///
-    /// This case is used to represent the action of updating an
-    /// existing row within a specific table in a database.
+    /// An existing row was modified in a table.
     ///
     /// - Parameters:
-    ///     - db: The name of the database where the update occurred.
-    ///     - table: The name of the table where the update occurred.
-    ///     - rowID: The row ID of the updated row.
+    ///   - db: The name of the database where the update occurred.
+    ///   - table: The name of the table containing the updated row.
+    ///   - rowID: The row ID of the modified row.
     case update(db: String, table: String, rowID: Int64)
     
-    /// Indicates the removal of a row from a table.
-    ///
-    /// This case is used to represent the action of deleting a
-    /// row from a specific table in a database.
+    /// A row was deleted from a table.
     ///
     /// - Parameters:
-    ///     - db: The name of the database from which the row was deleted.
-    ///     - table: The name of the table from which the row was deleted.
-    ///     - rowID: The row ID of the deleted row.
+    ///   - db: The name of the database where the deletion occurred.
+    ///   - table: The name of the table from which the row was deleted.
+    ///   - rowID: The row ID of the deleted row.
     case delete(db: String, table: String, rowID: Int64)
 }

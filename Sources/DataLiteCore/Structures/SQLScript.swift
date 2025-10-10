@@ -13,8 +13,8 @@ import Foundation
 ///
 /// ### Loading from a File
 ///
-/// To load a SQL script from a file in your project, use the following code. In this example,
-/// we load a file named `sample_script.sql` from the main app bundle.
+/// To load a SQL script from a file in your project, use the following code. In this example, we
+/// load a file named `sample_script.sql` from the main app bundle.
 ///
 /// ```swift
 /// do {
@@ -104,16 +104,16 @@ import Foundation
 /// - Important: Nested comments are not supported, so avoid placing multi-line comments inside
 ///   other multi-line comments.
 ///
-/// - Important: `SQLScript` does not support SQL scripts containing transactions.
-///   To execute an `SQLScript`, use the method ``Connection/execute(sql:)``, which executes
-///   each statement individually in autocommit mode.
+/// - Important: `SQLScript` does not support SQL scripts containing transactions. To execute an
+///   `SQLScript`, use the method ``ConnectionProtocol/execute(sql:)``, which executes each statement
+///   individually in autocommit mode.
 ///
 ///   If you need to execute the entire `SQLScript` within a single transaction, use the methods
-///   ``Connection/beginTransaction(_:)``, ``Connection/commitTransaction()``, and
-///   ``Connection/rollbackTransaction()`` to manage the transaction explicitly.
+///   ``ConnectionProtocol/beginTransaction(_:)``, ``ConnectionProtocol/commitTransaction()``, and
+///   ``ConnectionProtocol/rollbackTransaction()`` to manage the transaction explicitly.
 ///
-///   If your SQL script includes transaction statements (e.g., BEGIN, COMMIT, ROLLBACK),
-///   execute the entire script using ``Connection/execute(raw:)``.
+///   If your SQL script includes transaction statements (e.g., BEGIN, COMMIT, ROLLBACK), execute
+///   the entire script using ``ConnectionProtocol/execute(raw:)``.
 ///
 /// - Important: This class is not designed to work with untrusted user data. Never insert
 ///   user-provided data directly into SQL queries without proper sanitization or parameterization.
@@ -199,10 +199,12 @@ public struct SQLScript: Collection, ExpressibleByStringLiteral {
         extension: String? = nil,
         in bundle: Bundle = .main
     ) throws {
-        guard let url = bundle.url(
-            forResource: name,
-            withExtension: `extension`
-        ) else { return nil }
+        guard
+            let url = bundle.url(
+                forResource: name,
+                withExtension: `extension`
+            )
+        else { return nil }
         try self.init(contentsOf: url)
     }
     
@@ -239,7 +241,8 @@ public struct SQLScript: Collection, ExpressibleByStringLiteral {
     ///
     /// - Parameter string: The string containing SQL queries.
     public init(string: String) {
-        elements = string
+        elements =
+            string
             .removingComments()
             .trimmingLines()
             .splitStatements()

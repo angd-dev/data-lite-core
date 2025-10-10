@@ -1,27 +1,28 @@
 import Foundation
 
-public extension SQLiteRawBindable where Self: BinaryInteger {
-    /// Provides the `SQLiteRawValue` representation for integer types.
+public extension SQLiteBindable where Self: BinaryInteger {
+    /// Converts an integer value to its SQLite representation.
     ///
-    /// This implementation converts the integer value to an `SQLiteRawValue` of type `.int`.
+    /// Integer values are stored in SQLite as `INTEGER` values. This property wraps the current
+    /// value into an ``SQLiteValue/int(_:)`` case, suitable for use in parameter binding.
     ///
-    /// - Returns: An `SQLiteRawValue` of type `.int`, containing the integer value.
-    var sqliteRawValue: SQLiteRawValue {
+    /// - Returns: An ``SQLiteValue`` of type `.int` containing the integer value.
+    var sqliteValue: SQLiteValue {
         .int(Int64(self))
     }
 }
 
-public extension SQLiteRawRepresentable where Self: BinaryInteger {
-    /// Initializes an instance of the conforming type from an `SQLiteRawValue`.
+public extension SQLiteRepresentable where Self: BinaryInteger {
+    /// Creates an integer value from an SQLite representation.
     ///
-    /// This initializer handles `SQLiteRawValue` of type `.int`, converting it to the integer value.
-    /// It uses the `init(exactly:)` initializer to ensure that the value fits within the range of the
-    /// integer type. If the value cannot be exactly represented by the integer type, the initializer
-    /// will return `nil`.
+    /// This initializer supports the ``SQLiteValue/int(_:)`` case and uses `init(exactly:)` to
+    /// ensure that the value fits within the bounds of the integer type. If the value cannot be
+    /// exactly represented, the initializer returns `nil`.
     ///
-    /// - Parameter sqliteRawValue: The raw SQLite value used to initialize the instance.
-    init?(_ sqliteRawValue: SQLiteRawValue) {
-        switch sqliteRawValue {
+    /// - Parameter value: The SQLite value to convert from.
+    /// - Returns: A new instance if the conversion succeeds, or `nil` otherwise.
+    init?(_ value: SQLiteValue) {
+        switch value {
         case .int(let value):
             self.init(exactly: value)
         default:
@@ -30,14 +31,14 @@ public extension SQLiteRawRepresentable where Self: BinaryInteger {
     }
 }
 
-extension Int: SQLiteRawRepresentable {}
-extension Int8: SQLiteRawRepresentable {}
-extension Int16: SQLiteRawRepresentable {}
-extension Int32: SQLiteRawRepresentable {}
-extension Int64: SQLiteRawRepresentable {}
+extension Int: SQLiteRepresentable {}
+extension Int8: SQLiteRepresentable {}
+extension Int16: SQLiteRepresentable {}
+extension Int32: SQLiteRepresentable {}
+extension Int64: SQLiteRepresentable {}
 
-extension UInt: SQLiteRawRepresentable {}
-extension UInt8: SQLiteRawRepresentable {}
-extension UInt16: SQLiteRawRepresentable {}
-extension UInt32: SQLiteRawRepresentable {}
-extension UInt64: SQLiteRawRepresentable {}
+extension UInt: SQLiteRepresentable {}
+extension UInt8: SQLiteRepresentable {}
+extension UInt16: SQLiteRepresentable {}
+extension UInt32: SQLiteRepresentable {}
+extension UInt64: SQLiteRepresentable {}

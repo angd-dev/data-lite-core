@@ -17,15 +17,4 @@ struct ConnectionLocationTests {
         let temporaryLocation = Connection.Location.temporary
         #expect(temporaryLocation.path == "")
     }
-    
-    @Test func testFileLocationInitialization() {
-        let filePath = "/path/to/database.db"
-        let location = Connection.Location.file(path: filePath)
-        switch location {
-        case .file(let path):
-            #expect(path == filePath)
-        default:
-            Issue.record("Expected `.file` case but got \(location)")
-        }
-    }
 }

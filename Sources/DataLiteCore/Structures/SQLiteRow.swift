@@ -1,192 +1,65 @@
 import Foundation
 import OrderedCollections
 
-/// A structure representing a single row in an SQLite database, providing ordered access to columns and their values.
+/// An ordered collection that stores the column-value pairs of a single SQLite result row.
 ///
-/// The `SQLiteRow` structure allows for convenient access to the data stored in a row of an SQLite
-/// database, using an ordered dictionary to maintain the insertion order of columns. This makes it
-/// easy to retrieve, update, and manage the values associated with each column in the row.
+/// `SQLiteRow` preserves the order of columns as provided by the underlying data source. Each key
+/// is the column name exposed by the executed statement, and every value is represented as a
+/// ``SQLiteValue``.
 ///
-/// ```swift
-/// let row = SQLiteRow()
-/// row["name"] = "John Doe"
-/// row["age"] = 30
-/// print(row.description)
-/// // Outputs: ["name": 'John Doe', "age": 30]
-/// ```
-///
-/// ## Topics
-///
-/// ### Type Aliases
-///
-/// - ``Elements``
-/// - ``Column``
-/// - ``Value``
-/// - ``Index``
-/// - ``Element``
-public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
-    // MARK: - Type Aliases
+/// You can use dictionary-style lookup to access values by column name or iterate over ordered
+/// pairs using standard collection APIs. Column names are unique, and insertion order is maintained
+/// deterministically, making `SQLiteRow` safe to pass into APIs that rely on stable row layouts.
+public struct SQLiteRow {
+    /// The type that identifies a column within a row.
+    ///
+    /// In SQLite, a column name corresponds to the alias or identifier returned by the executing
+    /// statement. Each column name is unique within a single row.
+    public typealias Column = String
     
-    /// A type for the internal storage of column names and their associated values in a database row.
-    ///
-    /// This ordered dictionary is used to store column data for a row, retaining the insertion order
-    /// of columns as they appear in the SQLite database. Each key-value pair corresponds to a column name
-    /// and its associated value, represented by `SQLiteRawValue`.
-    ///
-    /// - Key: `String` representing the name of the column.
-    /// - Value: `SQLiteRawValue` representing the value of the column in the row.
-    public typealias Elements = OrderedDictionary<String, SQLiteRawValue>
-    
-    /// A type representing the name of a column in a database row.
-    ///
-    /// This type alias provides a convenient way to refer to column names within a row.
-    /// Each `Column` is a `String` key that corresponds to a specific column in the SQLite row,
-    /// matching the key type of the `Elements` dictionary.
-    public typealias Column = Elements.Key
-    
-    /// A type representing the value of a column in a database row.
-    ///
-    /// This type alias provides a convenient way to refer to the data stored in a column.
-    /// Each `Value` is of type `SQLiteRawValue`, which corresponds to the value associated
-    /// with a specific column in the SQLite row, matching the value type of the `Elements` dictionary.
-    public typealias Value = Elements.Value
-    
-    /// A type representing the index of a column in a database row.
-    ///
-    /// This type alias provides a convenient way to refer to the position of a column
-    /// within the ordered collection of columns. Each `Index` is an integer that corresponds
-    /// to the index of a specific column in the SQLite row, matching the index type of the `Elements` dictionary.
-    public typealias Index = Elements.Index
-    
-    /// A type representing a column-value pair in a database row.
-    ///
-    /// This type alias defines an element as a tuple consisting of a `Column` and its associated
-    /// `Value`. Each `Element` encapsulates a single column name and its corresponding value,
-    /// providing a clear structure for accessing and managing data within the SQLite row.
-    public typealias Element = (column: Column, value: Value)
+    /// The type that represents a value stored in a column.
+    public typealias Value = SQLiteValue
     
     // MARK: - Properties
     
-    /// An ordered dictionary that stores the columns and their associated values in the row.
-    ///
-    /// This private property holds the internal representation of the row's data as an
-    /// `OrderedDictionary`, maintaining the insertion order of columns. It is used to
-    /// facilitate access to the row's columns and values, ensuring that the original
-    /// order from the SQLite database is preserved.
-    private var elements: Elements
+    private var elements: OrderedDictionary<Column, Value>
     
-    /// The starting index of the row, which is always zero.
+    /// The column names in the order they appear in the result set.
     ///
-    /// This property indicates the initial position of the row's elements. Since the
-    /// elements in the row are indexed starting from zero, this property consistently
-    /// returns zero, allowing for predictable iteration through the row's data.
-    ///
-    /// - Complexity: `O(1)`
-    public var startIndex: Index {
-        0
-    }
-    
-    /// The ending index of the row, which is equal to the number of columns.
-    ///
-    /// This property indicates the position one past the last element in the row.
-    /// It returns the count of columns in the row, allowing for proper iteration
-    /// through the row's data in a collection context. The `endIndex` is useful
-    /// for determining the bounds of the row's elements when traversing or accessing them.
-    ///
-    /// - Complexity: `O(1)`
-    public var endIndex: Index {
-        elements.count
-    }
-    
-    /// A Boolean value indicating whether the row is empty.
-    ///
-    /// This property returns `true` if the row contains no columns; otherwise, it returns `false`.
-    /// It provides a quick way to check if there are any data present in the row, which can be
-    /// useful for validation or conditional logic when working with database rows.
-    ///
-    /// - Complexity: `O(1)`
-    public var isEmpty: Bool {
-        elements.isEmpty
-    }
-    
-    /// The number of columns in the row.
-    ///
-    /// This property returns the total count of columns stored in the row. It reflects
-    /// the number of column-value pairs in the `elements` dictionary, providing a convenient
-    /// way to determine how much data is present in the row. This is useful for iteration
-    /// and conditional checks when working with database rows.
-    ///
-    /// - Complexity: `O(1)`
-    public var count: Int {
-        elements.count
-    }
-    
-    /// A textual description of the row, showing the columns and values.
-    ///
-    /// This property returns a string representation of the row, including all column names
-    /// and their associated values. The description is generated from the `elements` dictionary,
-    /// providing a clear and concise overview of the row's data, which can be helpful for debugging
-    /// and logging purposes.
-    public var description: String {
-        elements.description
-    }
-    
-    /// A list of column names in the row, preserving their insertion order.
-    ///
-    /// Useful for dynamically generating SQL queries (e.g. `INSERT INTO ... (columns)`).
-    ///
-    /// - Complexity: `O(1)`
-    public var columns: [String] {
+    /// The order of column names corresponds to the sequence defined in the executed SQL statement.
+    /// This order is preserved exactly as provided by SQLite, ensuring deterministic column
+    /// indexing across rows.
+    public var columns: [Column] {
         elements.keys.elements
     }
     
-    /// A list of SQL named parameters in the form `:column`, preserving column order.
+    /// The named parameter tokens corresponding to each column, in result order.
     ///
-    /// Useful for generating placeholders in SQL queries (e.g. `VALUES (:column1, :column2, ...)`)
-    /// to match the row's structure.
-    ///
-    /// - Complexity: `O(n)`
+    /// Each element is formed by prefixing the column name with a colon (`:`), matching the syntax
+    /// of SQLite named parameters (e.g., `:username`, `:id`). The order of tokens matches the order
+    /// of columns in the result set.
     public var namedParameters: [String] {
         elements.keys.map { ":\($0)" }
     }
     
     // MARK: - Inits
     
-    /// Initializes an empty row.
-    ///
-    /// This initializer creates a new instance of `SQLiteRow` with no columns or values.
+    /// Creates an empty row with no columns.
     public init() {
         elements = [:]
     }
     
     // MARK: - Subscripts
     
-    /// Accesses the element at the specified index.
+    /// Accesses the value associated with the specified column.
     ///
-    /// This subscript allows you to retrieve a column-value pair from the row by its index.
-    /// It returns an `Element`, which is a tuple containing the column name and its associated
-    /// value. The index must be valid; otherwise, it will trigger a runtime error.
+    /// Use this subscript to read or modify the value of a particular column by name. If the column
+    /// does not exist, the getter returns `nil` and assigning a value to a new column name adds it
+    /// to the row.
     ///
-    /// - Parameter index: The index of the element to access.
-    /// - Returns: A tuple containing the column name and its associated value.
-    ///
-    /// - Complexity: `O(1)`
-    public subscript(index: Index) -> Element {
-        let element = elements.elements[index]
-        return (element.key, element.value)
-    }
-    
-    /// Accesses the value for the specified column.
-    ///
-    /// This subscript allows you to retrieve or set the value associated with a given column name.
-    /// It returns an optional `Value`, which is the value stored in the row for the specified column.
-    /// If the column does not exist, it returns `nil`. When setting a value, the column will be created
-    /// if it does not already exist.
-    ///
-    /// - Parameter column: The name of the column to access.
-    /// - Returns: The value associated with the specified column, or `nil` if the column does not exist.
-    ///
-    /// - Complexity: On average, the complexity is O(1) for lookups and amortized O(1) for updates.
+    /// - Parameter column: The name of the column.
+    /// - Returns: The value for the specified column, or `nil` if the column is not present.
+    /// - Complexity: Average O(1) lookup and amortized O(1) mutation.
     public subscript(column: Column) -> Value? {
         get { elements[column] }
         set { elements[column] = newValue }
@@ -194,32 +67,132 @@ public struct SQLiteRow: Collection, CustomStringConvertible, Equatable {
     
     // MARK: - Methods
     
-    /// Returns the index immediately after the given index.
+    /// Checks whether the row contains a column with the specified name.
     ///
-    /// This method provides the next valid index in the row's collection after the specified index.
-    /// It increments the given index by one, allowing for iteration through the row's elements
-    /// in a collection context. If the provided index is the last valid index, this method
-    /// will return an index that may not be valid for the collection, so it should be used
-    /// in conjunction with bounds checking.
+    /// Use this method to check if a column exists without retrieving its value or iterating
+    /// through all columns.
     ///
-    /// - Parameter i: A valid index of the row.
-    /// - Returns: The index immediately after `i`.
-    ///
-    /// - Complexity: `O(1)`
-    public func index(after i: Index) -> Index {
-        i + 1
-    }
-    
-    /// Checks if the row contains a value for the specified column.
-    ///
-    /// This method determines whether a column with the given name exists in the row. It is
-    /// useful for validating the presence of data before attempting to access it.
-    ///
-    /// - Parameter column: The name of the column to check for.
-    /// - Returns: `true` if the column exists; otherwise, `false`.
-    ///
-    /// - Complexity: On average, the complexity is `O(1)`.
+    /// - Parameter column: The name of the column to look for.
+    /// - Returns: `true` if the column exists, otherwise `false`.
+    /// - Complexity: Average O(1).
     public func contains(_ column: Column) -> Bool {
         elements.keys.contains(column)
     }
+    
+    /// Reserves enough storage to hold the specified number of columns.
+    ///
+    /// Calling this method can minimize reallocations when adding multiple columns to the row.
+    ///
+    /// - Parameter minimumCapacity: The requested number of column-value pairs to store.
+    /// - Complexity: O(max(count, minimumCapacity))
+    public mutating func reserveCapacity(_ minimumCapacity: Int) {
+        elements.reserveCapacity(minimumCapacity)
+    }
+    
+    /// Reserves enough storage to hold the specified number of columns.
+    ///
+    /// This overload provides a convenient interface for values originating from SQLite APIs, which
+    /// commonly use 32-bit integer sizes.
+    ///
+    /// - Parameter minimumCapacity: The requested number of column-value pairs to store.
+    /// - Complexity: O(max(count, minimumCapacity))
+    public mutating func reserveCapacity(_ minimumCapacity: Int32) {
+        elements.reserveCapacity(Int(minimumCapacity))
+    }
 }
+
+// MARK: - CustomStringConvertible
+
+extension SQLiteRow: CustomStringConvertible {
+    /// A textual representation of the row as an ordered dictionary of column-value pairs.
+    public var description: String {
+        elements.description
+    }
+}
+
+// MARK: - Collection
+
+extension SQLiteRow: Collection {
+    /// The element type of the row collection.
+    public typealias Element = (column: Column, value: Value)
+    
+    /// The index type used to access elements in the row.
+    public typealias Index = OrderedDictionary<Column, Value>.Index
+    
+    /// The position of the first element in the row.
+    ///
+    /// If the row is empty, `startIndex` equals `endIndex`. Use this property as the starting
+    /// position when iterating over columns.
+    ///
+    /// - Complexity: O(1)
+    public var startIndex: Index {
+        elements.elements.startIndex
+    }
+    
+    /// The position one past the last valid element in the row.
+    ///
+    /// Use this property to detect the end of iteration when traversing columns.
+    ///
+    /// - Complexity: O(1)
+    public var endIndex: Index {
+        elements.elements.endIndex
+    }
+    
+    /// A Boolean value that indicates whether the row contains no columns.
+    ///
+    /// - Complexity: O(1)
+    public var isEmpty: Bool {
+        elements.isEmpty
+    }
+    
+    /// The number of column-value pairs in the row.
+    ///
+    /// - Complexity: O(1)
+    public var count: Int {
+        elements.count
+    }
+    
+    /// Accesses the element at the specified position in the row.
+    ///
+    /// - Parameter index: A valid index of the row.
+    /// - Returns: The (column, value) pair at the specified position.
+    /// - Complexity: O(1)
+    public subscript(index: Index) -> Element {
+        let element = elements.elements[index]
+        return (element.key, element.value)
+    }
+    
+    /// Returns the position immediately after the specified index.
+    ///
+    /// - Parameter i: A valid index of the row.
+    /// - Returns: The index immediately after `i`.
+    /// - Complexity: O(1)
+    public func index(after i: Index) -> Index {
+        elements.elements.index(after: i)
+    }
+}
+
+// MARK: - ExpressibleByDictionaryLiteral
+
+extension SQLiteRow: ExpressibleByDictionaryLiteral {
+    /// Creates a `SQLiteRow` from a sequence of (column, value) pairs.
+    ///
+    /// - Parameter elements: The column-value pairs to include in the row.
+    /// - Note: Preserves the argument order and requires unique column names.
+    /// - Complexity: O(n), where n is the number of pairs.
+    public init(dictionaryLiteral elements: (Column, Value)...) {
+        self.elements = .init(uniqueKeysWithValues: elements)
+    }
+}
+
+// MARK: - Equatable
+
+extension SQLiteRow: Equatable {}
+
+// MARK: - Hashable
+
+extension SQLiteRow: Hashable {}
+
+// MARK: - Sendable
+
+extension SQLiteRow: Sendable {}

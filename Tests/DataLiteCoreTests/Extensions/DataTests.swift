@@ -5,12 +5,12 @@ import DataLiteCore
 struct DataSQLiteRawRepresentableTests {
     @Test func testDataToSQLiteRawValue() {
         let data = Data([0x01, 0x02, 0x03])
-        #expect(data.sqliteRawValue == .blob(data))
+        #expect(data.sqliteValue == .blob(data))
     }
     
     @Test func testSQLiteRawValueToData() {
         let data = Data([0x01, 0x02, 0x03])
-        let rawValue = SQLiteRawValue.blob(data)
+        let rawValue = SQLiteValue.blob(data)
         
         #expect(Data(rawValue) == data)
         

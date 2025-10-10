@@ -1,39 +1,35 @@
 import Foundation
 
-/// An enumeration representing different types of SQLite transactions.
+/// Represents the transaction modes supported by SQLite.
 ///
-/// SQLite transactions determine how the database engine handles concurrency and locking
-/// during a transaction. The default transaction behavior is DEFERRED. For more detailed information
-/// about SQLite transactions, refer to the [SQLite documentation](https://www.sqlite.org/lang_transaction.html).
+/// A transaction defines how the database manages concurrency and locking. The transaction type
+/// determines when a write lock is acquired and how other connections can access the database
+/// during the transaction.
+///
+/// - SeeAlso: [Transaction](https://sqlite.org/lang_transaction.html)
 public enum TransactionType: String, CustomStringConvertible {
-    /// A deferred transaction.
+    /// Defers the start of the transaction until the first database access.
     ///
-    /// A deferred transaction does not start until the database is first accessed. Internally,
-    /// the `BEGIN DEFERRED` statement merely sets a flag on the database connection to prevent
-    /// the automatic commit that normally occurs when the last statement finishes. If the first
-    /// statement after `BEGIN DEFERRED` is a `SELECT`, a read transaction begins. If it is a write
-    /// statement, a write transaction starts. Subsequent write operations may upgrade the transaction
-    /// to a write transaction if possible, or return `SQLITE_BUSY`. The transaction persists until
-    /// an explicit `COMMIT` or `ROLLBACK` or until a rollback is provoked by an error or an `ON CONFLICT ROLLBACK` clause.
+    /// With `BEGIN DEFERRED`, no locks are acquired immediately. If the first statement is a read
+    /// (`SELECT`), a read transaction begins. If it is a write statement, a write transaction
+    /// begins instead. Deferred transactions allow greater concurrency and are the default mode.
     case deferred = "DEFERRED"
     
-    /// An immediate transaction.
+    /// Starts a write transaction immediately.
     ///
-    /// An immediate transaction starts a new write immediately, without waiting for the first
-    /// write statement. The `BEGIN IMMEDIATE` statement may fail with `SQLITE_BUSY` if another
-    /// write transaction is active on a different database connection.
+    /// With `BEGIN IMMEDIATE`, a reserved lock is acquired right away to ensure that no other
+    /// connection can start a conflicting write. The statement may fail with `SQLITE_BUSY` if
+    /// another write transaction is already active.
     case immediate = "IMMEDIATE"
     
-    /// An exclusive transaction.
+    /// Starts an exclusive write transaction.
     ///
-    /// Similar to `IMMEDIATE`, an exclusive transaction starts a write immediately. However,
-    /// in non-WAL modes, `EXCLUSIVE` prevents other database connections from reading the database
-    /// while the transaction is in progress. In WAL mode, `EXCLUSIVE` behaves the same as `IMMEDIATE`.
+    /// With `BEGIN EXCLUSIVE`, a write lock is acquired immediately. In rollback journal mode, it
+    /// also prevents other connections from reading the database while the transaction is active.
+    /// In WAL mode, it behaves the same as `.immediate`.
     case exclusive = "EXCLUSIVE"
     
     /// A textual representation of the transaction type.
-    ///
-    /// Returns the raw value of the transaction type (e.g., "DEFERRED", "IMMEDIATE", "EXCLUSIVE").
     public var description: String {
         rawValue
     }

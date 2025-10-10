@@ -8,7 +8,7 @@ struct DateSQLiteRawRepresentableTests {
         let formatter = ISO8601DateFormatter()
         let dateString = formatter.string(from: date)
         
-        #expect(date.sqliteRawValue == .text(dateString))
+        #expect(date.sqliteValue == .text(dateString))
     }
     
     @Test func testSQLiteRawValueToDate() {
@@ -16,13 +16,13 @@ struct DateSQLiteRawRepresentableTests {
         let formatter = ISO8601DateFormatter()
         let dateString = formatter.string(from: date)
         
-        let rawText = SQLiteRawValue.text(dateString)
+        let rawText = SQLiteValue.text(dateString)
         #expect(Date(rawText) == date)
         
-        let rawInt = SQLiteRawValue.int(1609459200)
+        let rawInt = SQLiteValue.int(1609459200)
         #expect(Date(rawInt) == date)
         
-        let rawReal = SQLiteRawValue.real(1609459200)
+        let rawReal = SQLiteValue.real(1609459200)
         #expect(Date(rawReal) == date)
         
         #expect(Date(.blob(Data([0x01, 0x02, 0x03]))) == nil)

@@ -13,7 +13,7 @@ extension Function {
     /// )
     /// try connection.add(function: Function.Regexp.self)
     ///
-    /// try connection.execute(sql: """
+    /// try connection.execute(raw: """
     ///     SELECT * FROM users WHERE name REGEXP 'John.*';
     /// """)
     /// ```
@@ -64,8 +64,8 @@ extension Function {
         /// - Throws: ``Error/invalidArguments`` if the arguments are invalid or missing.
         /// - Throws: ``Error/regexError(_:)`` if an error occurs during regex evaluation.
         public override class func invoke(
-            args: Arguments
-        ) throws -> SQLiteRawRepresentable? {
+            args: any ArgumentsProtocol
+        ) throws -> SQLiteRepresentable? {
             guard let regex = args[0] as String?,
                   let value = args[1] as String?
             else { throw Error.invalidArguments }

@@ -2,34 +2,19 @@ import Foundation
 import DataLiteC
 
 extension Statement {
-    /// Provides a set of options for preparing SQLite statements.
+    /// A set of options that control how an SQLite statement is prepared.
     ///
-    /// This struct conforms to the `OptionSet` protocol, allowing multiple options to be combined using
-    /// bitwise operations. Each option corresponds to a specific SQLite preparation flag.
+    /// `Options` conforms to the `OptionSet` protocol, allowing multiple flags to be combined.
+    /// Each option corresponds to a specific SQLite preparation flag.
     ///
-    /// ## Example
-    ///
-    /// ```swift
-    /// let options: Statement.Options = [.persistent, .noVtab]
-    ///
-    /// if options.contains(.persistent) {
-    ///     print("Persistent option is set")
-    /// }
-    ///
-    /// if options.contains(.noVtab) {
-    ///     print("noVtab option is set")
-    /// }
-    /// ```
-    ///
-    /// The example demonstrates how to create an `Options` instance with `persistent` and `noVtab`
-    /// options set, and then check each option using the `contains` method.
+    /// - SeeAlso: [Prepare Flags](https://sqlite.org/c3ref/c_prepare_normalize.html)
     ///
     /// ## Topics
     ///
     /// ### Initializers
     ///
-    /// - ``init(rawValue:)-(Int32)``
     /// - ``init(rawValue:)-(UInt32)``
+    /// - ``init(rawValue:)-(Int32)``
     ///
     /// ### Instance Properties
     ///
@@ -42,83 +27,44 @@ extension Statement {
     public struct Options: OptionSet, Sendable {
         // MARK: - Properties
         
-        /// The underlying raw value representing the set of options as a bitmask.
+        /// The raw bitmask value that represents the combined options.
         ///
-        /// Each bit in the raw value corresponds to a specific option in the `Statement.Options` set. You can
-        /// use this value to perform low-level bitmask operations or to directly initialize an `Options`
-        /// instance.
-        ///
-        /// ## Example
-        ///
-        /// ```swift
-        /// let options = Statement.Options(
-        ///     rawValue: SQLITE_PREPARE_PERSISTENT | SQLITE_PREPARE_NO_VTAB
-        /// )
-        /// print(options.rawValue)  // Output: bitmask representing the combined options
-        /// ```
-        ///
-        /// The example shows how to access the raw bitmask value from an `Options` instance.
+        /// Each bit in the mask corresponds to a specific SQLite preparation flag. ou can use this
+        /// value for low-level bitwise operations or to construct an `Options` instance directly.
         public var rawValue: UInt32
         
-        /// Specifies that the prepared statement should be persistent and reusable.
+        /// Indicates that the prepared statement is persistent and reusable.
         ///
-        /// The `persistent` flag hints to SQLite that the prepared statement will be retained and reused
-        /// multiple times. Without this flag, SQLite assumes the statement will be used only once or a few
-        /// times and then destroyed.
+        /// This flag hints to SQLite that the prepared statement will be kept and reused multiple
+        /// times. Without this hint, SQLite assumes the statement will be used only a few times and
+        /// then destroyed.
         ///
-        /// The current implementation uses this hint to avoid depleting the limited store of lookaside
-        /// memory, potentially improving performance for frequently executed statements. Future versions
-        /// of SQLite may handle this flag differently.
-        public static let persistent = Self(rawValue: UInt32(SQLITE_PREPARE_PERSISTENT))
+        /// Using `.persistent` can help avoid excessive lookaside memory usage and improve
+        /// performance for frequently executed statements.
+        public static let persistent = Self(rawValue: SQLITE_PREPARE_PERSISTENT)
         
-        /// Specifies that virtual tables should not be used in the prepared statement.
+        /// Disables the use of virtual tables in the prepared statement.
         ///
-        /// The `noVtab` flag instructs SQLite to prevent the use of virtual tables when preparing the SQL
-        /// statement. This can be useful in cases where the use of virtual tables is undesirable or
-        /// restricted by the application logic. If this flag is set, any attempt to access a virtual table
-        /// during the execution of the prepared statement will result in an error.
-        ///
-        /// This option ensures that the prepared statement will only work with standard database tables.
-        public static let noVtab = Self(rawValue: UInt32(SQLITE_PREPARE_NO_VTAB))
+        /// When this flag is set, any attempt to reference a virtual table during statement
+        /// preparation results in an error. Use this option when virtual tables are restricted or
+        /// undesirable for security or policy reasons.
+        public static let noVtab = Self(rawValue: SQLITE_PREPARE_NO_VTAB)
         
         // MARK: - Inits
         
-        /// Initializes an `Options` instance with the given `UInt32` raw value.
+        /// Creates a new set of options from a raw `UInt32` bitmask value.
         ///
-        /// Use this initializer to create a set of options using the raw bitmask value, where each bit
-        /// corresponds to a specific option.
-        ///
-        /// ## Example
-        ///
-        /// ```swift
-        /// let options = Statement.Options(
-        ///     rawValue: UInt32(SQLITE_PREPARE_PERSISTENT | SQLITE_PREPARE_NO_VTAB)
-        /// )
-        /// print(options.contains(.persistent))  // Output: true
-        /// print(options.contains(.noVtab))      // Output: true
-        /// ```
-        ///
-        /// - Parameter rawValue: The `UInt32` raw bitmask value representing the set of options.
+        /// - Parameter rawValue: The bitmask value that represents the combined options.
         public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
         
-        /// Initializes an `Options` instance with the given `Int32` raw value.
+        /// Creates a new set of options from a raw `Int32` bitmask value.
         ///
-        /// This initializer allows the use of `Int32` values directly, converting them to the `UInt32` type
-        /// required for bitmask operations.
+        /// This initializer allows working directly with SQLite C constants that use
+        /// 32-bit integers.
         ///
-        /// ## Example
-        ///
-        /// ```swift
-        /// let options = Statement.Options(
-        ///     rawValue: SQLITE_PREPARE_PERSISTENT | SQLITE_PREPARE_NO_VTAB
-        /// )
-        /// print(options.contains(.persistent))  // Output: true
-        /// print(options.contains(.noVtab))      // Output: true
-        /// ```
-        ///
-        /// - Parameter rawValue: The `Int32` raw bitmask value representing the set of options.
+        /// - Parameter rawValue: The bitmask value that represents the combined options.
         public init(rawValue: Int32) {
             self.rawValue = UInt32(rawValue)
         }

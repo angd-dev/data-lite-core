@@ -101,7 +101,7 @@ struct ConnectionTests {
         """)
         
         #expect(
-            throws: Connection.Error(
+            throws: SQLiteError(
                 code: SQLITE_BUSY,
                 message: "database is locked"
             ),
@@ -229,7 +229,7 @@ struct ConnectionTests {
         try connection.add(function: function)
         try connection.remove(function: function)
         #expect(
-            throws: Connection.Error(
+            throws: SQLiteError(
                 code: SQLITE_ERROR,
                 message: "no such function: \(name)"
             ),
@@ -250,7 +250,7 @@ private extension ConnectionTests {
             [.deterministic, .innocuous]
         }
         
-        override class func invoke(args: Arguments) throws -> SQLiteRawRepresentable? {
+        override class func invoke(args: any ArgumentsProtocol) throws -> SQLiteRepresentable? {
             args[0].description
         }
     }
@@ -264,13 +264,13 @@ private extension ConnectionTests {
         
         private var count: Int = 0
         
-        override func step(args: Arguments) throws {
+        override func step(args: any ArgumentsProtocol) throws {
             if args[0] != .null {
                 count += 1
             }
         }
         
-        override func finalize() throws -> SQLiteRawRepresentable? {
+        override func finalize() throws -> SQLiteRepresentable? {
             count
         }
     }
