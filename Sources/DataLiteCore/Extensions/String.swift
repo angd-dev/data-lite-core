@@ -1,22 +1,25 @@
 import Foundation
 
-extension String: SQLiteRawRepresentable {
-    /// Provides the `SQLiteRawValue` representation for `String` type.
+extension String: SQLiteRepresentable {
+    /// Converts a `String` value to its SQLite representation.
     ///
-    /// This implementation converts the `String` value to an `SQLiteRawValue` of type `.text`.
+    /// Strings are stored in SQLite as text (`TEXT` type). This property wraps the current value
+    /// into an ``SQLiteValue/text(_:)`` case, suitable for parameter binding.
     ///
-    /// - Returns: An `SQLiteRawValue` of type `.text`, containing the string value.
-    public var sqliteRawValue: SQLiteRawValue {
+    /// - Returns: An ``SQLiteValue`` of type `.text` containing the string value.
+    public var sqliteValue: SQLiteValue {
         .text(self)
     }
     
-    /// Initializes an instance of `String` from an `SQLiteRawValue`.
+    /// Creates a `String` value from an SQLite representation.
     ///
-    /// This initializer handles `SQLiteRawValue` of type `.text`, converting it to a `String` value.
+    /// This initializer supports the ``SQLiteValue/text(_:)`` case and converts the text content
+    /// to a `String` instance.
     ///
-    /// - Parameter sqliteRawValue: The raw SQLite value used to initialize the instance.
-    public init?(_ sqliteRawValue: SQLiteRawValue) {
-        switch sqliteRawValue {
+    /// - Parameter value: The SQLite value to convert from.
+    /// - Returns: A `String` instance if the conversion succeeds, or `nil` otherwise.
+    public init?(_ value: SQLiteValue) {
+        switch value {
         case .text(let value):
             self = value
         default:

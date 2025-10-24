@@ -2,57 +2,50 @@ import Foundation
 import DataLiteC
 
 extension Function {
-    /// An option set representing the options for an SQLite function.
+    /// An option set representing the configuration flags for an SQLite function.
     ///
-    /// This structure defines an option set to configure various options for an SQLite function.
-    /// Options can be combined using bitwise OR operations.
+    /// The `Options` structure defines a set of flags that control the behavior of a user-defined
+    /// SQLite function. Multiple options can be combined using bitwise OR operations.
     ///
-    /// Example usage:
-    /// ```swift
-    /// let options: Function.Options = [.deterministic, .directonly]
-    /// ```
-    ///
-    /// - SeeAlso: [SQLite Function Flags](https://www.sqlite.org/c3ref/c_deterministic.html)
+    /// - SeeAlso: [Function Flags](https://sqlite.org/c3ref/c_deterministic.html)
     public struct Options: OptionSet, Hashable, Sendable {
         // MARK: - Properties
         
-        /// The raw value type used to store the SQLite function options.
+        /// The raw integer value representing the combined SQLite function options.
         public var rawValue: Int32
         
         // MARK: - Options
         
-        /// Indicates that the function is deterministic.
+        /// Marks the function as deterministic.
         ///
-        /// A deterministic function always gives the same output when it has the same input parameters.
-        /// For example, a mathematical function like sqrt() is deterministic.
+        /// A deterministic function always produces the same output for the same input parameters.
+        /// For example, mathematical functions like `sqrt()` or `abs()` are deterministic.
         public static let deterministic = Self(rawValue: SQLITE_DETERMINISTIC)
         
-        /// Indicates that the function may only be invoked from top-level SQL.
+        /// Restricts the function to be invoked only from top-level SQL.
         ///
-        /// A function with the `directonly` option cannot be used in a VIEWs or TRIGGERs, or in schema structures
-        /// such as CHECK constraints, DEFAULT clauses, expression indexes, partial indexes, or generated columns.
+        /// A function with the `directonly` flag cannot be used in views, triggers, or schema
+        /// definitions such as `CHECK` constraints, `DEFAULT` clauses, expression indexes, partial
+        /// indexes, or generated columns.
         ///
-        /// The `directonly` option is recommended for any application-defined SQL function that has side-effects
-        /// or that could potentially leak sensitive information. This will prevent attacks in which an application
-        /// is tricked into using a database file that has had its schema surreptitiously modified to invoke the
-        /// application-defined function in ways that are harmful.
+        /// This option is recommended for functions that may have side effects or expose sensitive
+        /// information. It helps prevent attacks involving maliciously crafted database schemas
+        /// that attempt to invoke such functions implicitly.
         public static let directonly = Self(rawValue: SQLITE_DIRECTONLY)
         
-        /// Indicates that the function is innocuous.
+        /// Marks the function as innocuous.
         ///
-        /// The `innocuous` option means that the function is unlikely to cause problems even if misused.
-        /// An innocuous function should have no side effects and should not depend on any values other
-        /// than its input parameters.
-        /// The `abs()` function is an example of an innocuous function.
-        /// The `load_extension()` SQL function is not innocuous because of its side effects.
+        /// The `innocuous` flag indicates that the function is safe even if misused. Such a
+        /// function should have no side effects and depend only on its input parameters. For
+        /// instance, `abs()` is innocuous, while `load_extension()` is not due to its side effects.
         ///
-        /// `innocuous` is similar to `deterministic`, but is not exactly the same.
-        /// The `random()` function is an example of a function that is innocuous but not deterministic.
+        /// This option is similar to ``deterministic`` but not identical. For example, `random()`
+        /// is innocuous but not deterministic.
         public static let innocuous = Self(rawValue: SQLITE_INNOCUOUS)
         
         // MARK: - Inits
         
-        /// Creates an SQLite function option set from a raw value.
+        /// Creates a new set of SQLite function options from the specified raw value.
         ///
         /// - Parameter rawValue: The raw value representing the SQLite function options.
         public init(rawValue: Int32) {

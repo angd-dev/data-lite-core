@@ -1,22 +1,26 @@
 import Foundation
 
-extension UUID: SQLiteRawRepresentable {
-    /// Provides the `SQLiteRawValue` representation for `UUID`.
+extension UUID: SQLiteRepresentable {
+    /// Converts a `UUID` value to its SQLite representation.
     ///
-    /// This implementation converts the `UUID` value to an `SQLiteRawValue` of type `.text`.
+    /// UUIDs are stored in SQLite as text (`TEXT` type) using their canonical string form
+    /// (e.g. `"550E8400-E29B-41D4-A716-446655440000"`). This property wraps the current value into
+    /// an ``SQLiteValue/text(_:)`` case.
     ///
-    /// - Returns: An `SQLiteRawValue` of type `.text`, containing the UUID string.
-    public var sqliteRawValue: SQLiteRawValue {
+    /// - Returns: An ``SQLiteValue`` of type `.text` containing the UUID string.
+    public var sqliteValue: SQLiteValue {
         .text(self.uuidString)
     }
     
-    /// Initializes an instance of `UUID` from an `SQLiteRawValue`.
+    /// Creates a `UUID` value from an SQLite representation.
     ///
-    /// This initializer handles `SQLiteRawValue` of type `.text`, converting it to a `UUID`.
+    /// This initializer supports the ``SQLiteValue/text(_:)`` case and attempts to parse the stored
+    /// text as a valid UUID string.
     ///
-    /// - Parameter sqliteRawValue: The raw SQLite value used to initialize the instance.
-    public init?(_ sqliteRawValue: SQLiteRawValue) {
-        switch sqliteRawValue {
+    /// - Parameter value: The SQLite value to convert from.
+    /// - Returns: A `UUID` instance if the string is valid, or `nil` otherwise.
+    public init?(_ value: SQLiteValue) {
+        switch value {
         case .text(let value):
             self.init(uuidString: value)
         default:

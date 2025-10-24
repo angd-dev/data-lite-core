@@ -2,6 +2,19 @@
 
 **DataLiteCore** is an intuitive library for working with SQLite in Swift applications.
 
-## Overview
+**DataLiteCore** provides an object-oriented API on top of the C interface, making it simple to
+integrate SQLite capabilities into your projects. The library combines powerful database
+management and SQL execution features with the ergonomics and flexibility of native Swift code.
 
-**DataLiteCore** provides an object-oriented API over the C interface, allowing developers to easily integrate SQLite functionality into their projects. The library offers powerful capabilities for database management and executing SQL queries while maintaining the simplicity and flexibility of the native Swift interface.
+## Topics
+
+### Articles
+
+- <doc:WorkingWithConnections>
+- <doc:CustomFunctions>
+- <doc:PreparedStatements>
+- <doc:SQLiteRows>
+- <doc:SQLScripts>
+- <doc:ErrorHandling>
+- <doc:Multithreading>
+- <doc:DatabaseEncryption>

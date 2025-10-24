@@ -26,7 +26,7 @@ final class SQLiteRowTests: XCTestCase {
         XCTAssertEqual(row["name"], .text("Alice"))
         XCTAssertNil(row["age"])
         
-        row["age"] = SQLiteRawValue.int(30)
+        row["age"] = SQLiteValue.int(30)
         XCTAssertEqual(row["age"], .int(30))
     }
     

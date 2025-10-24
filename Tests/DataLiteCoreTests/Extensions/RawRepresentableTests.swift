@@ -5,7 +5,7 @@ import DataLiteCore
 struct RawRepresentableTests {
     @Test func testRawRepresentableToSQLiteRawValue() {
         let color: Color = .green
-        #expect(color.sqliteRawValue == .int(1))
+        #expect(color.sqliteValue == .int(1))
     }
     
     @Test func testSQLiteRawValueToRawRepresentable() {
@@ -19,7 +19,7 @@ struct RawRepresentableTests {
 }
 
 private extension RawRepresentableTests {
-    enum Color: Int, SQLiteRawRepresentable {
+    enum Color: Int, SQLiteRepresentable {
         case red
         case green
         case blue

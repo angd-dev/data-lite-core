@@ -1,22 +1,25 @@
 import Foundation
 
-extension Data: SQLiteRawRepresentable {
-    /// Provides the `SQLiteRawValue` representation for `Data` types.
+extension Data: SQLiteRepresentable {
+    /// Converts a `Data` value to its SQLite representation.
     ///
-    /// This implementation converts the `Data` value to an `SQLiteRawValue` of type `.blob`.
+    /// Binary data is stored in SQLite as a BLOB (`BLOB` type). This property wraps the current
+    /// value into an ``SQLiteValue/blob(_:)`` case, suitable for parameter binding.
     ///
-    /// - Returns: An `SQLiteRawValue` of type `.blob`, containing the data.
-    public var sqliteRawValue: SQLiteRawValue {
+    /// - Returns: An ``SQLiteValue`` of type `.blob` containing the binary data.
+    public var sqliteValue: SQLiteValue {
         .blob(self)
     }
     
-    /// Initializes an instance of the conforming type from an `SQLiteRawValue`.
+    /// Creates a `Data` value from an SQLite representation.
     ///
-    /// This initializer handles `SQLiteRawValue` of type `.blob`, converting it to `Data`.
+    /// This initializer supports the ``SQLiteValue/blob(_:)`` case and converts the binary content
+    /// to a `Data` instance.
     ///
-    /// - Parameter sqliteRawValue: The raw SQLite value used to initialize the instance.
-    public init?(_ sqliteRawValue: SQLiteRawValue) {
-        switch sqliteRawValue {
+    /// - Parameter value: The SQLite value to convert from.
+    /// - Returns: A `Data` instance if the conversion succeeds, or `nil` otherwise.
+    public init?(_ value: SQLiteValue) {
+        switch value {
         case .blob(let data):
             self = data
         default:

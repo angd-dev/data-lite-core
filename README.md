@@ -15,8 +15,8 @@ DataLiteCore provides an object-oriented API over the C interface, allowing deve
 
 ## Requirements
 
-- **Swift**: 5.10+
-- **Platforms**: macOS 10.14+, iOS 12.0+, Linux
+- **Swift**: 6.0+
+- **Platforms**: macOS 10.14+, iOS 12.0+
 
 ## Installation
 
@@ -37,7 +37,7 @@ To add DataLiteCore to your project, use Swift Package Manager (SPM).
 If you are using Swift Package Manager with a `Package.swift` file, add the dependency like this:
 
 ```swift
-// swift-tools-version: 5.10
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(

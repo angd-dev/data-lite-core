@@ -4,8 +4,8 @@ import DataLiteCore
 
 struct BoolTests {
     @Test func testBoolToSQLiteRawValue() {
-        #expect(true.sqliteRawValue == .int(1))
-        #expect(false.sqliteRawValue == .int(0))
+        #expect(true.sqliteValue == .int(1))
+        #expect(false.sqliteValue == .int(0))
     }
     
     @Test func testSQLiteRawValueToBool() {

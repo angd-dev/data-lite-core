@@ -1,28 +1,28 @@
 import Foundation
 
-public extension SQLiteRawBindable where Self: RawRepresentable, RawValue: SQLiteRawBindable {
-    /// Provides the `SQLiteRawValue` representation for `RawRepresentable` types.
+public extension SQLiteBindable where Self: RawRepresentable, RawValue: SQLiteBindable {
+    /// Converts a `RawRepresentable` value to its SQLite representation.
     ///
-    /// This implementation converts the `RawRepresentable` type's `rawValue` to its corresponding
-    /// `SQLiteRawValue` representation. The `rawValue` itself must conform to `SQLiteRawBindable`.
+    /// The `rawValue` of the conforming type must itself conform to ``SQLiteBindable``. This
+    /// property delegates the conversion to the underlying ``rawValue``.
     ///
-    /// - Returns: An `SQLiteRawValue` representation of the `RawRepresentable` type.
-    var sqliteRawValue: SQLiteRawValue {
-        rawValue.sqliteRawValue
+    /// - Returns: The ``SQLiteValue`` representation of the underlying ``rawValue``.
+    var sqliteValue: SQLiteValue {
+        rawValue.sqliteValue
     }
 }
 
-public extension SQLiteRawRepresentable where Self: RawRepresentable, RawValue: SQLiteRawRepresentable {
-    /// Initializes an instance of the conforming type from an `SQLiteRawValue`.
+public extension SQLiteRepresentable where Self: RawRepresentable, RawValue: SQLiteRepresentable {
+    /// Creates a `RawRepresentable` value from an SQLite representation.
     ///
-    /// This initializer converts the `SQLiteRawValue` to the `RawRepresentable` type's `rawValue`.
-    /// It first attempts to create a `RawValue` from the `SQLiteRawValue`, then uses that to initialize
-    /// the `RawRepresentable` instance. If the `SQLiteRawValue` cannot be converted to the `RawValue`, the
-    /// initializer returns `nil`.
+    /// This initializer first attempts to create the underlying ``RawValue`` from the provided
+    /// ``SQLiteValue``. If successful, it uses that raw value to initialize the `RawRepresentable`
+    /// type. If the conversion fails, the initializer returns `nil`.
     ///
-    /// - Parameter sqliteRawValue: The raw SQLite value used to initialize the instance.
-    init?(_ sqliteRawValue: SQLiteRawValue) {
-        if let value = RawValue(sqliteRawValue) {
+    /// - Parameter value: The SQLite value to convert from.
+    /// - Returns: A new instance if the conversion succeeds, or `nil` otherwise.
+    init?(_ value: SQLiteValue) {
+        if let value = RawValue(value) {
             self.init(rawValue: value)
         } else {
             return nil
