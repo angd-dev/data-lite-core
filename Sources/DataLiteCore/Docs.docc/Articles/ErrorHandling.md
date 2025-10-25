@@ -25,9 +25,8 @@ SQLite messages verbatim.
 Most DataLiteCore APIs are annotated as `throws(SQLiteError)`, meaning they only throw SQLiteError
 instances.
 
-Only APIs that touch the file system or execute arbitrary user code may throw other error
-types — for example, ``Connection/init(location:options:)`` when creating directories for on-disk
-databases.
+Only APIs that execute arbitrary user code or integrate with external systems may surface other
+error types. Consult the documentation on each API for specific details.
 
 ```swift
 do {
