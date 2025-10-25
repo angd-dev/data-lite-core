@@ -51,6 +51,19 @@ public final class Statement {
 // MARK: - StatementProtocol
 
 extension Statement: StatementProtocol {
+    public var sql: String? {
+        let cSQL = sqlite3_sql(statement)
+        guard let cSQL else { return nil }
+        return String(cString: cSQL)
+    }
+    
+    public var expandedSQL: String? {
+        let cSQL = sqlite3_expanded_sql(statement)
+        defer { sqlite3_free(cSQL) }
+        guard let cSQL else { return nil }
+        return String(cString: cSQL)
+    }
+    
     public func parameterCount() -> Int32 {
         sqlite3_bind_parameter_count(statement)
     }

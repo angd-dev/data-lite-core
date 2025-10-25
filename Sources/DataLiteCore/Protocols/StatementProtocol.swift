@@ -8,6 +8,11 @@ import Foundation
 ///
 /// ## Topics
 ///
+/// ### Retrieving Statement SQL
+///
+/// - ``sql``
+/// - ``expandedSQL``
+///
 /// ### Binding Parameters
 ///
 /// - ``parameterCount()``
@@ -34,6 +39,20 @@ import Foundation
 /// - ``columnValue(at:)->T?``
 /// - ``currentRow()``
 public protocol StatementProtocol {
+    // MARK: - Retrieving Statement SQL
+    
+    /// The original SQL text used to create this prepared statement.
+    ///
+    /// Returns the statement text as it was supplied when the statement was prepared. Useful for
+    /// diagnostics or query introspection.
+    var sql: String? { get }
+    
+    /// The SQL text with all parameter values expanded into their literal forms.
+    ///
+    /// Shows the actual SQL string that would be executed after parameter binding. Useful for
+    /// debugging and logging queries.
+    var expandedSQL: String? { get }
+    
     // MARK: - Binding Parameters
     
     /// Returns the number of parameters in the prepared SQLite statement.
@@ -101,7 +120,7 @@ public protocol StatementProtocol {
     ///
     /// - Parameters:
     ///   - value: The ``SQLiteValue`` to bind.
-    ///   - name: The parameter name as written in SQL, including its prefix.
+    ///   - name: The parameter name exactly as written in SQL, including its prefix.
     /// - Throws: ``SQLiteError`` if binding fails.
     ///
     /// - SeeAlso: [Binding Values To Prepared Statements](
@@ -130,7 +149,7 @@ public protocol StatementProtocol {
     ///
     /// - Parameters:
     ///   - value: The value to bind. If `nil`, `NULL` is bound.
-    ///   - name: The parameter name as written in SQL, including its prefix.
+    ///   - name: The parameter name exactly as written in SQL, including its prefix.
     /// - Throws: ``SQLiteError`` if binding fails.
     ///
     /// - SeeAlso: [Binding Values To Prepared Statements](

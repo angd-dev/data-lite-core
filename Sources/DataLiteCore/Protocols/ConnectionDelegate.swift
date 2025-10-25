@@ -2,11 +2,9 @@ import Foundation
 
 /// A delegate that observes connection-level database events.
 ///
-/// Conforming types can monitor row-level updates and transaction lifecycle events. All methods are
-/// optional — default implementations do nothing.
-///
-/// This protocol is typically used for debugging, logging, or synchronizing application state with
-/// database changes.
+/// Conforming types can monitor row-level updates and transaction lifecycle events. This protocol
+/// is typically used for debugging, logging, or synchronizing application state with database
+/// changes.
 ///
 /// - Important: Delegate methods are invoked synchronously on SQLite’s internal execution thread.
 ///   Implementations must be lightweight and non-blocking to avoid slowing down SQL operations.
@@ -42,10 +40,4 @@ public protocol ConnectionDelegate: AnyObject {
     ///
     /// - Parameter connection: The connection that rolled back.
     func connectionDidRollback(_ connection: ConnectionProtocol)
-}
-
-public extension ConnectionDelegate {
-    func connection(_ connection: ConnectionProtocol, didUpdate action: SQLiteAction) {}
-    func connectionWillCommit(_ connection: ConnectionProtocol) throws {}
-    func connectionDidRollback(_ connection: ConnectionProtocol) {}
 }

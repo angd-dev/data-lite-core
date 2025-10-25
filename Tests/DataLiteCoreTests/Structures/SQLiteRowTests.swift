@@ -1,91 +1,106 @@
-import XCTest
-import DataLiteCore
+import Testing
 
-final class SQLiteRowTests: XCTestCase {
-    func testInitEmptyRow() {
-        let row = SQLiteRow()
-        XCTAssertTrue(row.isEmpty)
-        XCTAssertEqual(row.count, 0)
-    }
-    
-    func testUpdateColumnPosition() {
+@testable import DataLiteCore
+
+struct SQLiteRowTests {
+    @Test func subscriptByColumn() {
         var row = SQLiteRow()
+        #expect(row["name"] == nil)
+        
         row["name"] = .text("Alice")
-        row["age"] = .int(30)
+        #expect(row["name"] == .text("Alice"))
         
         row["name"] = .text("Bob")
-        
-        XCTAssertEqual(row[0].column, "name")
-        XCTAssertEqual(row[0].value, .text("Bob"))
-    }
-    
-    func testSubscriptByColumn() {
-        var row = SQLiteRow()
-        row["name"] = .text("Alice")
-        
-        XCTAssertEqual(row["name"], .text("Alice"))
-        XCTAssertNil(row["age"])
-        
-        row["age"] = SQLiteValue.int(30)
-        XCTAssertEqual(row["age"], .int(30))
-    }
-    
-    func testSubscriptByIndex() {
-        var row = SQLiteRow()
-        row["name"] = .text("Alice")
-        row["age"] = .int(30)
-        
-        let firstElement = row[row.startIndex]
-        XCTAssertEqual(firstElement.column, "name")
-        XCTAssertEqual(firstElement.value, .text("Alice"))
-        
-        let secondElement = row[row.index(after: row.startIndex)]
-        XCTAssertEqual(secondElement.column, "age")
-        XCTAssertEqual(secondElement.value, .int(30))
-    }
-    
-    func testDescription() {
-        var row = SQLiteRow()
-        row["name"] = .text("Alice")
-        row["age"] = .int(30)
-        
-        let expectedDescription = #"["name": 'Alice', "age": 30]"#
-        XCTAssertEqual(row.description, expectedDescription)
-    }
-    
-    func testCountAndIsEmpty() {
-        var row = SQLiteRow()
-        XCTAssertTrue(row.isEmpty)
-        XCTAssertEqual(row.count, 0)
-        
-        row["name"] = .text("Alice")
-        XCTAssertFalse(row.isEmpty)
-        XCTAssertEqual(row.count, 1)
-        
-        row["age"] = .int(30)
-        XCTAssertEqual(row.count, 2)
+        #expect(row["name"] == .text("Bob"))
         
         row["name"] = nil
-        XCTAssertEqual(row.count, 1)
+        #expect(row["name"] == nil)
     }
     
-    func testIteration() {
+    @Test func subscriptByIndex() {
+        let row: SQLiteRow = [
+            "name": .text("Alice"),
+            "age": .int(30),
+            "city": .text("Wonderland")
+        ]
+        #expect(row[0] == ("name", .text("Alice")))
+        #expect(row[1] == ("age", .int(30)))
+        #expect(row[2] == ("city", .text("Wonderland")))
+    }
+    
+    @Test func columns() {
+        let row: SQLiteRow = [
+            "name": .text("Alice"),
+            "age": .int(30),
+            "city": .text("Wonderland")
+        ]
+        #expect(row.columns == ["name", "age", "city"])
+    }
+    
+    @Test func namedParameters() {
+        let row: SQLiteRow = [
+            "name": .text("Alice"),
+            "age": .int(30),
+            "city": .text("Wonderland")
+        ]
+        #expect(row.namedParameters == [":name", ":age", ":city"])
+    }
+    
+    @Test func containsColumn() {
+        let row: SQLiteRow = ["one": .null]
+        #expect(row.contains("one"))
+        #expect(row.contains("two") == false)
+    }
+    
+    @Test func description() {
+        let row: SQLiteRow = [
+            "name": .text("Alice"),
+            "age": .int(30)
+        ]
+        #expect(row.description == #"["name": 'Alice', "age": 30]"#)
+    }
+    
+    @Test func startIndex() {
+        let row: SQLiteRow = [
+            "name": .text("Alice"),
+            "age": .int(30)
+        ]
+        #expect(row.startIndex == 0)
+    }
+    
+    @Test func endIndex() {
+        let row: SQLiteRow = [
+            "name": .text("Alice"),
+            "age": .int(30)
+        ]
+        #expect(row.endIndex == 2)
+    }
+    
+    @Test func endIndexEmptyRow() {
+        let row = SQLiteRow()
+        #expect(row.endIndex == 0)
+    }
+    
+    @Test func isEmpty() {
         var row = SQLiteRow()
-        row["name"] = .text("Alice")
-        row["age"] = .int(30)
-        row["city"] = .text("Wonderland")
+        #expect(row.isEmpty)
         
-        var elements: [SQLiteRow.Element] = []
-        for (column, value) in row {
-            elements.append((column, value))
-        }
+        row["one"] = .int(1)
+        #expect(row.isEmpty == false)
+    }
+    
+    @Test func count() {
+        var row = SQLiteRow()
+        #expect(row.count == 0)
         
-        XCTAssertEqual(elements.count, 3)
-        XCTAssertEqual(elements[0].column, "name")
-        XCTAssertEqual(elements[0].value, .text("Alice"))
-        XCTAssertEqual(elements[1].column, "age")
-        XCTAssertEqual(elements[1].value, .int(30))
-        XCTAssertEqual(elements[2].column, "city")
-        XCTAssertEqual(elements[2].value, .text("Wonderland"))
+        row["one"] = .int(1)
+        #expect(row.count == 1)
+    }
+    
+    @Test func indexAfter() {
+        let row = SQLiteRow()
+        #expect(row.index(after: 0) == 1)
+        #expect(row.index(after: 1) == 2)
+        #expect(row.index(after: 2) == 3)
     }
 }

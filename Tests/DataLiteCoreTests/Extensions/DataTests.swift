@@ -3,20 +3,18 @@ import Foundation
 import DataLiteCore
 
 struct DataSQLiteRawRepresentableTests {
-    @Test func testDataToSQLiteRawValue() {
+    @Test func dataToSQLiteValue() {
         let data = Data([0x01, 0x02, 0x03])
         #expect(data.sqliteValue == .blob(data))
     }
     
-    @Test func testSQLiteRawValueToData() {
+    @Test func dataFromSQLiteValue() {
         let data = Data([0x01, 0x02, 0x03])
-        let rawValue = SQLiteValue.blob(data)
+        #expect(Data(SQLiteValue.blob(data)) == data)
         
-        #expect(Data(rawValue) == data)
-        
-        #expect(Data(.int(1)) == nil)
-        #expect(Data(.real(1.0)) == nil)
-        #expect(Data(.text("blob")) == nil)
-        #expect(Data(.null) == nil)
+        #expect(Data(SQLiteValue.int(1)) == nil)
+        #expect(Data(SQLiteValue.real(1.0)) == nil)
+        #expect(Data(SQLiteValue.text("blob")) == nil)
+        #expect(Data(SQLiteValue.null) == nil)
     }
 }

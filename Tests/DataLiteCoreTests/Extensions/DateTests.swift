@@ -3,30 +3,23 @@ import Foundation
 import DataLiteCore
 
 struct DateSQLiteRawRepresentableTests {
-    @Test func testDateToSQLiteRawValue() {
+    @Test func dateToSQLiteValue() {
         let date = Date(timeIntervalSince1970: 1609459200)
-        let formatter = ISO8601DateFormatter()
-        let dateString = formatter.string(from: date)
+        let dateString = "2021-01-01T00:00:00Z"
         
         #expect(date.sqliteValue == .text(dateString))
     }
     
-    @Test func testSQLiteRawValueToDate() {
+    @Test func dateFromSQLiteValue() {
         let date = Date(timeIntervalSince1970: 1609459200)
-        let formatter = ISO8601DateFormatter()
-        let dateString = formatter.string(from: date)
+        let dateString = "2021-01-01T00:00:00Z"
         
-        let rawText = SQLiteValue.text(dateString)
-        #expect(Date(rawText) == date)
+        #expect(Date(SQLiteValue.text(dateString)) == date)
+        #expect(Date(SQLiteValue.int(1609459200)) == date)
+        #expect(Date(SQLiteValue.real(1609459200)) == date)
         
-        let rawInt = SQLiteValue.int(1609459200)
-        #expect(Date(rawInt) == date)
-        
-        let rawReal = SQLiteValue.real(1609459200)
-        #expect(Date(rawReal) == date)
-        
-        #expect(Date(.blob(Data([0x01, 0x02, 0x03]))) == nil)
-        #expect(Date(.null) == nil)
-        #expect(Date(.text("Invalid date format")) == nil)
+        #expect(Date(SQLiteValue.blob(Data([0x01, 0x02, 0x03]))) == nil)
+        #expect(Date(SQLiteValue.null) == nil)
+        #expect(Date(SQLiteValue.text("Invalid date format")) == nil)
     }
 }

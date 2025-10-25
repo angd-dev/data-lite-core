@@ -73,12 +73,12 @@ public enum JournalMode: String, SQLiteRepresentable {
     /// - SeeAlso: [journal_mode](https://sqlite.org/pragma.html#pragma_journal_mode)
     public var rawValue: String {
         switch self {
-        case .delete: "DELETE"
+        case .delete:   "DELETE"
         case .truncate: "TRUNCATE"
-        case .persist: "PERSIST"
-        case .memory: "MEMORY"
-        case .wal: "WAL"
-        case .off: "OFF"
+        case .persist:  "PERSIST"
+        case .memory:   "MEMORY"
+        case .wal:      "WAL"
+        case .off:      "OFF"
         }
     }
     
@@ -95,13 +95,13 @@ public enum JournalMode: String, SQLiteRepresentable {
     /// - SeeAlso: [journal_mode](https://sqlite.org/pragma.html#pragma_journal_mode)
     public init?(rawValue: String) {
         switch rawValue.uppercased() {
-        case "DELETE": self = .delete
-        case "TRUNCATE": self = .truncate
-        case "PERSIST": self = .persist
-        case "MEMORY": self = .memory
-        case "WAL": self = .wal
-        case "OFF": self = .off
-        default: return nil
+        case "DELETE":      self = .delete
+        case "TRUNCATE":    self = .truncate
+        case "PERSIST":     self = .persist
+        case "MEMORY":      self = .memory
+        case "WAL":         self = .wal
+        case "OFF":         self = .off
+        default:            return nil
         }
     }
 }
