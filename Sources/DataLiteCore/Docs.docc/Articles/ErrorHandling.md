@@ -30,7 +30,7 @@ error types. Consult the documentation on each API for specific details.
 
 ```swift
 do {
-    try connection.execute(raw: """
+    try connection.execute(sql: """
         INSERT INTO users(email) VALUES ('ada@example.com')
     """)
 } catch {
@@ -47,8 +47,8 @@ do {
 
 ## Multi-Statement Scenarios
 
-- ``ConnectionProtocol/execute(sql:)`` and ``ConnectionProtocol/execute(raw:)`` stop at the first
-  failing statement and propagate its ``SQLiteError``.
+- ``ConnectionProtocol/execute(sql:)`` stops at the first failing statement and propagates its
+  ``SQLiteError``.
 - ``StatementProtocol/execute(_:)`` reuses prepared statements; inside `catch` blocks, remember to
   call ``StatementProtocol/reset()`` and (if needed) ``StatementProtocol/clearBindings()`` before
   retrying.

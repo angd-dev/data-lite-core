@@ -13,7 +13,7 @@ extension Function {
     /// )
     /// try connection.add(function: Function.Regexp.self)
     ///
-    /// try connection.execute(raw: """
+    /// try connection.execute(sql: """
     ///     SELECT * FROM users WHERE name REGEXP 'John.*';
     /// """)
     /// ```

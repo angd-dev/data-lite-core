@@ -87,8 +87,8 @@ statement in its own transaction.
 ```swift
 do {
     try connection.beginTransaction(.immediate)
-    try connection.execute(raw: "INSERT INTO users (name) VALUES ('Ada')")
-    try connection.execute(raw: "INSERT INTO users (name) VALUES ('Grace')")
+    try connection.execute(sql: "INSERT INTO users (name) VALUES ('Ada')")
+    try connection.execute(sql: "INSERT INTO users (name) VALUES ('Grace')")
     try connection.commitTransaction()
 } catch {
     try? connection.rollbackTransaction()

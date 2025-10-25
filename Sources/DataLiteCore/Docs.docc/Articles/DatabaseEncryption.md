@@ -49,7 +49,7 @@ Use `nil` or `"main"` for the primary database, `"temp"` for the temporary one, 
 others.
 
 ```swift
-try connection.execute(raw: "ATTACH DATABASE 'analytics.db' AS analytics")
+try connection.execute(sql: "ATTACH DATABASE 'analytics.db' AS analytics")
 try connection.apply(.passphrase("aux-password"), name: "analytics")
 ```
 

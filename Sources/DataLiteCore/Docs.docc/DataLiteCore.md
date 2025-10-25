@@ -14,7 +14,6 @@ management and SQL execution features with the ergonomics and flexibility of nat
 - <doc:CustomFunctions>
 - <doc:PreparedStatements>
 - <doc:SQLiteRows>
-- <doc:SQLScripts>
 - <doc:ErrorHandling>
 - <doc:Multithreading>
 - <doc:DatabaseEncryption>

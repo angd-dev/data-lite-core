@@ -91,12 +91,12 @@ struct ConnectionTests {
             options: [.create, .readwrite, .fullmutex]
         )
         
-        try oneConn.execute(raw: """
+        try oneConn.execute(sql: """
         CREATE TABLE test (id INTEGER PRIMARY KEY, value TEXT);
         """)
         
         try oneConn.beginTransaction()
-        try oneConn.execute(raw: """
+        try oneConn.execute(sql: """
         INSERT INTO test (value) VALUES ('first');
         """)
         
@@ -107,7 +107,7 @@ struct ConnectionTests {
             ),
             performing: {
                 twoConn.busyTimeout = 0
-                try twoConn.execute(raw: """
+                try twoConn.execute(sql: """
                 INSERT INTO test (value) VALUES ('second');
                 """)
             }
@@ -207,7 +207,7 @@ struct ConnectionTests {
         INSERT INTO items (value) VALUES (1), (2), (NULL), (3);
         """)
         try connection.add(function: function)
-        try connection.execute(raw: "SELECT \(name)(value) FROM items")
+        try connection.execute(sql: "SELECT \(name)(value) FROM items")
     }
     
     @Test(arguments: [
@@ -234,7 +234,7 @@ struct ConnectionTests {
                 message: "no such function: \(name)"
             ),
             performing: {
-                try connection.execute(raw: """
+                try connection.execute(sql: """
                 SELECT \(name)(value) FROM items
                 """)
             }

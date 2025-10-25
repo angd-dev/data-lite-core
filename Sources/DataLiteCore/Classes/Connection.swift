@@ -203,8 +203,8 @@ extension Connection: ConnectionProtocol {
         try Statement(db: connection, sql: query, options: options)
     }
     
-    public func execute(raw sql: String) throws(SQLiteError) {
-        let status = sqlite3_exec(connection, sql, nil, nil, nil)
+    public func execute(sql script: String) throws(SQLiteError) {
+        let status = sqlite3_exec(connection, script, nil, nil, nil)
         guard status == SQLITE_OK else { throw SQLiteError(connection) }
     }
 }
