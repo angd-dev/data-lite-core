@@ -25,13 +25,12 @@ SQLite messages verbatim.
 Most DataLiteCore APIs are annotated as `throws(SQLiteError)`, meaning they only throw SQLiteError
 instances.
 
-Only APIs that touch the file system or execute arbitrary user code may throw other error
-types — for example, ``Connection/init(location:options:)`` when creating directories for on-disk
-databases.
+Only APIs that execute arbitrary user code or integrate with external systems may surface other
+error types. Consult the documentation on each API for specific details.
 
 ```swift
 do {
-    try connection.execute(raw: """
+    try connection.execute(sql: """
         INSERT INTO users(email) VALUES ('ada@example.com')
     """)
 } catch {
@@ -48,8 +47,8 @@ do {
 
 ## Multi-Statement Scenarios
 
-- ``ConnectionProtocol/execute(sql:)`` and ``ConnectionProtocol/execute(raw:)`` stop at the first
-  failing statement and propagate its ``SQLiteError``.
+- ``ConnectionProtocol/execute(sql:)`` stops at the first failing statement and propagates its
+  ``SQLiteError``.
 - ``StatementProtocol/execute(_:)`` reuses prepared statements; inside `catch` blocks, remember to
   call ``StatementProtocol/reset()`` and (if needed) ``StatementProtocol/clearBindings()`` before
   retrying.

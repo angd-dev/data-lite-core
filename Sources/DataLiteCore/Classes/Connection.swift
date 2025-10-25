@@ -48,8 +48,6 @@ public final class Connection {
     /// Initializes a new connection to an SQLite database.
     ///
     /// Opens a connection to the database at the specified `location` using the given `options`.
-    /// If the location represents a file path, this method ensures that the parent directory
-    /// exists, creating intermediate directories if needed.
     ///
     /// ### Example
     ///
@@ -73,15 +71,7 @@ public final class Connection {
     ///
     /// - Throws: ``SQLiteError`` if the connection cannot be opened or initialized due to
     ///   SQLite-related issues such as invalid path, missing permissions, or corruption.
-    /// - Throws: An error if directory creation fails for file-based database locations.
-    public init(location: Location, options: Options) throws {
-        if case let Location.file(path) = location, !path.isEmpty {
-            try FileManager.default.createDirectory(
-                at: URL(fileURLWithPath: path).deletingLastPathComponent(),
-                withIntermediateDirectories: true
-            )
-        }
-        
+    public init(location: Location, options: Options) throws(SQLiteError) {
         var connection: OpaquePointer! = nil
         let status = sqlite3_open_v2(location.path, &connection, options.rawValue, nil)
         
@@ -121,8 +111,7 @@ public final class Connection {
     ///
     /// - Throws: ``SQLiteError`` if the connection cannot be opened due to SQLite-level errors,
     ///   invalid path, missing permissions, or corruption.
-    /// - Throws: An error if the required directory structure cannot be created.
-    public convenience init(path: String, options: Options) throws {
+    public convenience init(path: String, options: Options) throws(SQLiteError) {
         try self.init(location: .file(path: path), options: options)
     }
     
@@ -214,8 +203,8 @@ extension Connection: ConnectionProtocol {
         try Statement(db: connection, sql: query, options: options)
     }
     
-    public func execute(raw sql: String) throws(SQLiteError) {
-        let status = sqlite3_exec(connection, sql, nil, nil, nil)
+    public func execute(sql script: String) throws(SQLiteError) {
+        let status = sqlite3_exec(connection, script, nil, nil, nil)
         guard status == SQLITE_OK else { throw SQLiteError(connection) }
     }
 }

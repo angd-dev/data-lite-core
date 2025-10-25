@@ -51,7 +51,6 @@ import Foundation
 ///
 /// ### Executing SQL Commands
 ///
-/// - ``execute(raw:)``
 /// - ``execute(sql:)``
 ///
 /// ### Controlling PRAGMA Settings
@@ -303,21 +302,11 @@ public protocol ConnectionProtocol: AnyObject {
     ///
     /// Execution stops at the first error, and the corresponding ``SQLiteError`` is thrown.
     ///
-    /// - Parameter sql: The SQL text containing one or more statements to execute.
+    /// - Parameter script: The SQL text containing one or more statements to execute.
     /// - Throws: ``SQLiteError`` if any statement fails to execute.
     ///
     /// - SeeAlso: [One-Step Query Execution Interface](https://sqlite.org/c3ref/exec.html)
-    func execute(raw sql: String) throws(SQLiteError)
-    
-    /// Executes multiple SQL statements from a script.
-    ///
-    /// The provided ``SQLScript`` may contain one or more SQL statements separated by semicolons.
-    /// Each statement is executed sequentially using the current connection. This is useful for
-    /// running migration scripts or initializing database schemas.
-    ///
-    /// - Parameter script: The SQL script to execute.
-    /// - Throws: ``SQLiteError`` if any statement in the script fails.
-    func execute(sql script: SQLScript) throws(SQLiteError)
+    func execute(sql script: String) throws(SQLiteError)
     
     // MARK: - PRAGMA Control
     
@@ -419,13 +408,6 @@ public extension ConnectionProtocol {
     
     func prepare(sql query: String) throws(SQLiteError) -> StatementProtocol {
         try prepare(sql: query, options: [])
-    }
-    
-    func execute(sql script: SQLScript) throws(SQLiteError) {
-        for query in script {
-            let stmt = try prepare(sql: query)
-            while try stmt.step() {}
-        }
     }
     
     func get<T: SQLiteRepresentable>(pragma: Pragma) throws(SQLiteError) -> T? {
