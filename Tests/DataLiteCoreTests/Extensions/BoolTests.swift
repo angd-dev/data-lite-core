@@ -3,20 +3,20 @@ import Foundation
 import DataLiteCore
 
 struct BoolTests {
-    @Test func testBoolToSQLiteRawValue() {
+    @Test func boolToSQLiteValue() {
         #expect(true.sqliteValue == .int(1))
         #expect(false.sqliteValue == .int(0))
     }
     
-    @Test func testSQLiteRawValueToBool() {
-        #expect(Bool(.int(1)) == true)
-        #expect(Bool(.int(0)) == false)
+    @Test func boolFromSQLiteValue() {
+        #expect(Bool(SQLiteValue.int(1)) == true)
+        #expect(Bool(SQLiteValue.int(0)) == false)
         
-        #expect(Bool(.int(-1)) == nil)
-        #expect(Bool(.int(2)) == nil)
-        #expect(Bool(.real(1.0)) == nil)
-        #expect(Bool(.text("true")) == nil)
-        #expect(Bool(.blob(Data())) == nil)
-        #expect(Bool(.null) == nil)
+        #expect(Bool(SQLiteValue.int(-1)) == nil)
+        #expect(Bool(SQLiteValue.int(2)) == nil)
+        #expect(Bool(SQLiteValue.real(1.0)) == nil)
+        #expect(Bool(SQLiteValue.text("true")) == nil)
+        #expect(Bool(SQLiteValue.blob(Data())) == nil)
+        #expect(Bool(SQLiteValue.null) == nil)
     }
 }

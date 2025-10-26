@@ -30,7 +30,7 @@ final class StatementTests {
         sqlite3_close_v2(connection)
     }
     
-    @Test func testInitWithError() throws {
+    @Test func initWithError() throws {
         #expect(
             throws: SQLiteError(
                 code: SQLITE_ERROR,
@@ -46,19 +46,22 @@ final class StatementTests {
         )
     }
     
-    @Test func testParameterCount() throws {
-        let sql = "SELECT * FROM t WHERE id = ? AND s = ?"
+    @Test func sqlString() throws {
+        let sql = "SELECT * FROM t WHERE id = ?"
         let stmt = try Statement(db: connection, sql: sql, options: [])
-        #expect(stmt.parameterCount() == 2)
+        #expect(stmt.sql == sql)
     }
     
-    @Test func testZeroParameterCount() throws {
-        let sql = "SELECT * FROM t"
+    @Test(arguments: [
+        ("SELECT * FROM t WHERE id = ? AND s = ?", 2),
+        ("SELECT * FROM t WHERE id = 1 AND s = ''", 0)
+    ])
+    func parameterCount(_ sql: String, _ expanded: Int32) throws {
         let stmt = try Statement(db: connection, sql: sql, options: [])
-        #expect(stmt.parameterCount() == 0)
+        #expect(stmt.parameterCount() == expanded)
     }
     
-    @Test func testParameterIndexByName() throws {
+    @Test func parameterIndexByName() throws {
         let sql = "SELECT * FROM t WHERE id = :id AND s = :s"
         let stmt = try Statement(db: connection, sql: sql, options: [])
         #expect(stmt.parameterIndexBy(":id") == 1)
@@ -66,7 +69,7 @@ final class StatementTests {
         #expect(stmt.parameterIndexBy(":invalid") == 0)
     }
     
-    @Test func testParameterNameByIndex() throws {
+    @Test func parameterNameByIndex() throws {
         let sql = "SELECT * FROM t WHERE id = :id AND s = :s"
         let stmt = try Statement(db: connection, sql: sql, options: [])
         #expect(stmt.parameterNameBy(1) == ":id")
@@ -74,20 +77,36 @@ final class StatementTests {
         #expect(stmt.parameterNameBy(3) == nil)
     }
     
-    @Test func testBindValueAtIndex() throws {
-        let sql = "SELECT * FROM t where id = ?"
+    @Test func bindValueAtIndex() throws {
+        let sql = "SELECT * FROM t WHERE id = ?"
+        
         let stmt = try Statement(db: connection, sql: sql, options: [])
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = NULL")
+        
         try stmt.bind(.int(42), at: 1)
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = 42")
+        
         try stmt.bind(.real(42), at: 1)
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = 42.0")
+        
         try stmt.bind(.text("42"), at: 1)
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = '42'")
+        
         try stmt.bind(.blob(Data([0x42])), at: 1)
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = x'42'")
+        
         try stmt.bind(.null, at: 1)
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = NULL")
+        
         try stmt.bind(TestValue(value: 42), at: 1)
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = 42")
+        
         try stmt.bind(TestValue?.none, at: 1)
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = NULL")
     }
     
-    @Test func testErrorBindValueAtIndex() throws {
-        let sql = "SELECT * FROM t where id = ?"
+    @Test func errorBindValueAtIndex() throws {
+        let sql = "SELECT * FROM t WHERE id = ?"
         let stmt = try Statement(db: connection, sql: sql, options: [])
         #expect(
             throws: SQLiteError(
@@ -100,20 +119,36 @@ final class StatementTests {
         )
     }
     
-    @Test func testBindValueByName() throws {
-        let sql = "SELECT * FROM t where id = :id"
+    @Test func bindValueByName() throws {
+        let sql = "SELECT * FROM t WHERE id = :id"
+        
         let stmt = try Statement(db: connection, sql: sql, options: [])
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = NULL")
+        
         try stmt.bind(.int(42), by: ":id")
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = 42")
+        
         try stmt.bind(.real(42), by: ":id")
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = 42.0")
+        
         try stmt.bind(.text("42"), by: ":id")
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = '42'")
+        
         try stmt.bind(.blob(Data([0x42])), by: ":id")
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = x'42'")
+        
         try stmt.bind(.null, by: ":id")
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = NULL")
+        
         try stmt.bind(TestValue(value: 42), by: ":id")
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = 42")
+        
         try stmt.bind(TestValue?.none, by: ":id")
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = NULL")
     }
     
-    @Test func testErrorBindValueByName() throws {
-        let sql = "SELECT * FROM t where id = :id"
+    @Test func errorBindValueByName() throws {
+        let sql = "SELECT * FROM t WHERE id = :id"
         let stmt = try Statement(db: connection, sql: sql, options: [])
         #expect(
             throws: SQLiteError(
@@ -126,14 +161,52 @@ final class StatementTests {
         )
     }
     
-    @Test func testStepOneRow() throws {
-        let sql = "SELECT 1 where 1"
+    @Test func bindRow() throws {
+        let row: SQLiteRow = ["id": .int(42), "name": .text("Alice")]
+        let sql = "SELECT * FROM t WHERE id = :id AND s = :name"
+        
+        let stmt = try Statement(db: connection, sql: sql, options: [])
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = NULL AND s = NULL")
+        
+        try stmt.bind(row)
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = 42 AND s = 'Alice'")
+    }
+    
+    @Test func errorBindRow() throws {
+        let row: SQLiteRow = ["name": .text("Alice")]
+        let stmt = try Statement(
+            db: connection, sql: "SELECT * FROM t", options: []
+        )
+        #expect(
+            throws: SQLiteError(
+                code: SQLITE_RANGE,
+                message: "column index out of range"
+            ),
+            performing: {
+                try stmt.bind(row)
+            }
+        )
+    }
+    
+    @Test func clearBindings() throws {
+        let sql = "SELECT * FROM t WHERE id = :id"
+        let stmt = try Statement(db: connection, sql: sql, options: [])
+        
+        try stmt.bind(.int(42), at: 1)
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = 42")
+        
+        try stmt.clearBindings()
+        #expect(stmt.expandedSQL == "SELECT * FROM t WHERE id = NULL")
+    }
+    
+    @Test func stepOneRow() throws {
+        let sql = "SELECT 1 WHERE 1"
         let stmt = try Statement(db: connection, sql: sql, options: [])
         #expect(try stmt.step())
         #expect(try stmt.step() == false)
     }
     
-    @Test func testStepMultipleRows() throws {
+    @Test func stepMultipleRows() throws {
         sqlite3_exec(connection, "INSERT INTO t(n) VALUES (1),(2),(3)", nil, nil, nil)
         let sql = "SELECT id FROM t ORDER BY id"
         let stmt = try Statement(db: connection, sql: sql, options: [])
@@ -143,13 +216,13 @@ final class StatementTests {
         #expect(try stmt.step() == false)
     }
     
-    @Test func testStepNoRows() throws {
+    @Test func stepNoRows() throws {
         let sql = "SELECT 1 WHERE 0"
         let stmt = try Statement(db: connection, sql: sql, options: [])
         #expect(try stmt.step() == false)
     }
     
-    @Test func testStepWithError() throws {
+    @Test func stepWithError() throws {
         sqlite3_exec(connection, "INSERT INTO t(id, n) VALUES (1, 10)", nil, nil, nil)
         let sql = "INSERT INTO t(id, n) VALUES (?, ?)"
         let stmt = try Statement(db: connection, sql: sql, options: [])
@@ -166,13 +239,52 @@ final class StatementTests {
         )
     }
     
-    @Test func testColumnCount() throws {
+    @Test func executeRows() throws {
+        let rows: [SQLiteRow] = [
+            [
+                "id": .int(1),
+                "n": .int(42),
+                "r": .real(3.14),
+                "s": .text("Test"),
+                "b": .blob(Data([0x42]))
+            ],
+            [
+                "id": .int(2),
+                "n": .null,
+                "r": .null,
+                "s": .null,
+                "b": .null
+            ]
+        ]
+        let sql = "INSERT INTO t(id, n, r, s, b) VALUES (:id, :n, :r, :s, :b)"
+        try Statement(db: connection, sql: sql, options: []).execute(rows)
+        
+        let stmt = try Statement(db: connection, sql: "SELECT * FROM t", options: [])
+        
+        #expect(try stmt.step())
+        #expect(stmt.currentRow() == rows[0])
+        
+        #expect(try stmt.step())
+        #expect(stmt.currentRow() == rows[1])
+        
+        #expect(try stmt.step() == false)
+    }
+    
+    @Test func executeEmptyRows() throws {
+        let sql = "INSERT INTO t(id, n, r, s, b) VALUES (:id, :n, :r, :s, :b)"
+        try Statement(db: connection, sql: sql, options: []).execute([])
+        
+        let stmt = try Statement(db: connection, sql: "SELECT * FROM t", options: [])
+        #expect(try stmt.step() == false)
+    }
+    
+    @Test func columnCount() throws {
         let sql = "SELECT * FROM t"
         let stmt = try Statement(db: connection, sql: sql, options: [])
         #expect(stmt.columnCount() == 5)
     }
     
-    @Test func testColumnName() throws {
+    @Test func columnName() throws {
         let sql = "SELECT * FROM t"
         let stmt = try Statement(db: connection, sql: sql, options: [])
         #expect(stmt.columnName(at: 0) == "id")
@@ -180,10 +292,13 @@ final class StatementTests {
         #expect(stmt.columnName(at: 2) == "r")
         #expect(stmt.columnName(at: 3) == "s")
         #expect(stmt.columnName(at: 4) == "b")
+        #expect(stmt.columnName(at: 5) == nil)
     }
     
-    @Test func testColumnValueAtIndex() throws {
-        sqlite3_exec(connection, """
+    @Test func columnValueAtIndex() throws {
+        sqlite3_exec(
+            connection,
+            """
             INSERT INTO t (id, n, r, s, b)
             VALUES (10, 42, 3.5, 'hello', x'DEADBEEF')
             """, nil, nil, nil
@@ -201,8 +316,10 @@ final class StatementTests {
         #expect(stmt.columnValue(at: 4) == .blob(Data([0xDE, 0xAD, 0xBE, 0xEF])))
     }
     
-    @Test func testColumnNullValueAtIndex() throws {
-        sqlite3_exec(connection, """
+    @Test func columnNullValueAtIndex() throws {
+        sqlite3_exec(
+            connection,
+            """
             INSERT INTO t (id) VALUES (10)
             """, nil, nil, nil
         )
@@ -214,6 +331,30 @@ final class StatementTests {
         #expect(stmt.columnValue(at: 0) == .int(10))
         #expect(stmt.columnValue(at: 1) == .null)
         #expect(stmt.columnValue(at: 1) == TestValue?.none)
+    }
+    
+    @Test func currentRow() throws {
+        sqlite3_exec(
+            connection,
+            """
+            INSERT INTO t (id, n, r, s, b)
+            VALUES (10, 42, 3.5, 'hello', x'DEADBEEF')
+            """, nil, nil, nil
+        )
+        
+        let row: SQLiteRow = [
+            "id": .int(10),
+            "n": .int(42),
+            "r": .real(3.5),
+            "s": .text("hello"),
+            "b": .blob(Data([0xDE, 0xAD, 0xBE, 0xEF]))
+        ]
+
+        let sql = "SELECT * FROM t WHERE id = 10"
+        let stmt = try Statement(db: connection, sql: sql, options: [])
+        
+        #expect(try stmt.step())
+        #expect(stmt.currentRow() == row)
     }
 }
 

@@ -46,7 +46,7 @@ public struct SQLiteError: Error, Equatable, CustomStringConvertible, Sendable {
     /// name (`SQLiteError`), the numeric code, and the corresponding message, making it useful for
     /// debugging, logging, or diagnostic displays.
     public var description: String {
-        "\(Self.self) code: \(code) message: \(message)"
+        "\(Self.self)(\(code)): \(message)"
     }
     
     /// Creates a new error instance with the specified result code and message.

@@ -152,7 +152,7 @@ extension Connection: ConnectionProtocol {
             sqlite3_key(connection, key.keyValue, key.length)
         }
         guard status == SQLITE_OK else {
-            throw SQLiteError(connection)
+            throw SQLiteError(code: status, message: "")
         }
     }
     
@@ -163,13 +163,15 @@ extension Connection: ConnectionProtocol {
             sqlite3_rekey(connection, key.keyValue, key.length)
         }
         guard status == SQLITE_OK else {
-            throw SQLiteError(connection)
+            throw SQLiteError(code: status, message: "")
         }
     }
     
     public func add(delegate: any ConnectionDelegate) {
-        delegates.append(.init(delegate: delegate))
-        delegates.removeAll { $0.delegate == nil }
+        if !delegates.contains(where: { $0.delegate === delegate }) {
+            delegates.append(.init(delegate: delegate))
+            delegates.removeAll { $0.delegate == nil }
+        }
     }
     
     public func remove(delegate: any ConnectionDelegate) {
@@ -179,8 +181,10 @@ extension Connection: ConnectionProtocol {
     }
     
     public func add(trace delegate: any ConnectionTraceDelegate) {
-        traceDelegates.append(.init(delegate: delegate))
-        traceDelegates.removeAll { $0.delegate == nil }
+        if !traceDelegates.contains(where: { $0.delegate === delegate }) {
+            traceDelegates.append(.init(delegate: delegate))
+            traceDelegates.removeAll { $0.delegate == nil }
+        }
     }
     
     public func remove(trace delegate: any ConnectionTraceDelegate) {

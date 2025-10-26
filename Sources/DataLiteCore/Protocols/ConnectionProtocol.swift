@@ -12,10 +12,10 @@ import Foundation
 ///
 /// - ``isAutocommit``
 /// - ``isReadonly``
-/// - ``busyTimeout``
 ///
 /// ### Accessing PRAGMA Values
 ///
+/// - ``busyTimeout``
 /// - ``applicationID``
 /// - ``foreignKeys``
 /// - ``journalMode``
@@ -84,6 +84,8 @@ public protocol ConnectionProtocol: AnyObject {
     /// - SeeAlso: [Determine if a database is read-only](https://sqlite.org/c3ref/db_readonly.html)
     var isReadonly: Bool { get }
     
+    // MARK: - PRAGMA Accessors
+    
     /// The busy timeout of the connection, in milliseconds.
     ///
     /// Defines how long SQLite waits for a locked database to become available before returning
@@ -92,8 +94,6 @@ public protocol ConnectionProtocol: AnyObject {
     ///
     /// - SeeAlso: [Set A Busy Timeout](https://sqlite.org/c3ref/busy_timeout.html)
     var busyTimeout: Int32 { get set }
-    
-    // MARK: - PRAGMA Accessors
     
     /// The application identifier stored in the database header.
     ///

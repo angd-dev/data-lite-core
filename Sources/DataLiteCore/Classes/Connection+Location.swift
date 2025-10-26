@@ -7,7 +7,7 @@ extension Connection {
     /// - ``file(path:)``: A database at a specific file path or URI (persistent).
     /// - ``inMemory``: An in-memory database that exists only in RAM.
     /// - ``temporary``: A temporary on-disk database deleted when the connection closes.
-    public enum Location {
+    public enum Location: Sendable {
         /// A database stored at a given file path or URI.
         ///
         /// Use this for persistent databases located on disk or referenced via SQLite URI.

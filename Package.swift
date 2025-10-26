@@ -34,10 +34,8 @@ let package = Package(
         .testTarget(
             name: "DataLiteCoreTests",
             dependencies: ["DataLiteCore"],
-            resources: [
-                .copy("Resources/valid_script.sql"),
-                .copy("Resources/empty_script.sql"),
-                .copy("Resources/invalid_script.sql")
+            cSettings: [
+                .define("SQLITE_HAS_CODEC")
             ]
         )
     ]

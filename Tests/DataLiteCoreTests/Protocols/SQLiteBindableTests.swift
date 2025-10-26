@@ -2,11 +2,6 @@ import Foundation
 import Testing
 import DataLiteCore
 
-private struct BindableStub: SQLiteBindable {
-    let value: SQLiteValue
-    var sqliteValue: SQLiteValue { value }
-}
-
 struct SQLiteBindableTests {
     @Test(arguments: [
         SQLiteValue.int(42),
@@ -15,8 +10,15 @@ struct SQLiteBindableTests {
         SQLiteValue.blob(Data([0x00, 0xAB])),
         SQLiteValue.null
     ])
-    func testDefaultSqliteLiteralPassThrough(_ value: SQLiteValue) {
-        let stub = BindableStub(value: value)
+    func sqliteLiteral(_ value: SQLiteValue) {
+        let stub = Bindable(value: value)
         #expect(stub.sqliteLiteral == value.sqliteLiteral)
+    }
+}
+
+private extension SQLiteBindableTests {
+    struct Bindable: SQLiteBindable {
+        let value: SQLiteValue
+        var sqliteValue: SQLiteValue { value }
     }
 }

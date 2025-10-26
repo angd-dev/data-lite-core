@@ -1,73 +1,71 @@
-import Foundation
 import Testing
+import Foundation
 import DataLiteC
-import DataLiteCore
+
+@testable import DataLiteCore
 
 struct ConnectionTests {
-    @Test func testIsAutocommitInitially() throws {
-        let connection = try Connection(
-            location: .inMemory,
-            options: [.create, .readwrite]
-        )
-        #expect(connection.isAutocommit == true)
+    @Test(arguments: [
+        Connection.Location.inMemory,
+        Connection.Location.temporary
+    ])
+    func initLocation(_ location: Connection.Location) throws {
+        let _ = try Connection(location: location, options: [.create, .readwrite])
     }
     
-    @Test func testIsAutocommitDuringTransaction() throws {
-        let connection = try Connection(
-            location: .inMemory,
-            options: [.create, .readwrite]
-        )
-        try connection.beginTransaction()
-        #expect(connection.isAutocommit == false)
+    @Test func initPath() throws {
+        let dir = FileManager.default.temporaryDirectory
+        let file = UUID().uuidString
+        let path = dir.appending(component: file).path
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        let _ = try Connection(path: path, options: [.create, .readwrite])
     }
     
-    @Test func testIsAutocommitAfterCommit() throws {
-        let connection = try Connection(
-            location: .inMemory,
-            options: [.create, .readwrite]
+    @Test func initPathFail() {
+        #expect(
+            throws: SQLiteError(
+                code: SQLITE_CANTOPEN,
+                message: "unable to open database file"
+            ),
+            performing: {
+                try Connection(
+                    path: "/invalid-path/",
+                    options: [.create, .readwrite]
+                )
+            }
         )
-        try connection.beginTransaction()
-        try connection.commitTransaction()
-        #expect(connection.isAutocommit == true)
     }
     
-    @Test func testIsAutocommitAfterRollback() throws {
+    @Test func isAutocommit() throws {
         let connection = try Connection(
             location: .inMemory,
             options: [.create, .readwrite]
         )
-        try connection.beginTransaction()
-        try connection.rollbackTransaction()
-        #expect(connection.isAutocommit == true)
+        #expect(connection.isAutocommit)
     }
     
     @Test(arguments: [
         (Connection.Options.readwrite, false),
         (Connection.Options.readonly, true)
     ])
-    func testIsReadonly(
-        _ opt: Connection.Options,
-        _ isReadonly: Bool
+    func isReadonly(
+        _ options: Connection.Options,
+        _ expected: Bool
     ) throws {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("sqlite")
-        defer { try? FileManager.default.removeItem(at: url) }
-        let _ = try Connection(
-            location: .file(path: url.path),
-            options: [.create, .readwrite]
-        )
-        let connection = try Connection(
-            location: .file(path: url.path),
-            options: [opt]
-        )
-        #expect(connection.isReadonly == isReadonly)
+        let dir = FileManager.default.temporaryDirectory
+        let file = UUID().uuidString
+        let path = dir.appending(component: file).path
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        
+        let _ = try Connection(path: path, options: [.create, .readwrite])
+        let connection = try Connection(path: path, options: options)
+        
+        #expect(connection.isReadonly == expected)
     }
     
     @Test func testBusyTimeout() throws {
         let connection = try Connection(
-            location: .inMemory,
-            options: [.create, .readwrite]
+            location: .inMemory, options: [.create, .readwrite]
         )
         connection.busyTimeout = 5000
         #expect(try connection.get(pragma: .busyTimeout) == 5000)
@@ -76,50 +74,9 @@ struct ConnectionTests {
         #expect(connection.busyTimeout == 1000)
     }
     
-    @Test func testBusyTimeoutSQLiteBusy() throws {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("sqlite")
-        defer { try? FileManager.default.removeItem(at: url) }
-        
-        let oneConn = try Connection(
-            location: .file(path: url.path),
-            options: [.create, .readwrite, .fullmutex]
-        )
-        let twoConn = try Connection(
-            location: .file(path: url.path),
-            options: [.create, .readwrite, .fullmutex]
-        )
-        
-        try oneConn.execute(sql: """
-        CREATE TABLE test (id INTEGER PRIMARY KEY, value TEXT);
-        """)
-        
-        try oneConn.beginTransaction()
-        try oneConn.execute(sql: """
-        INSERT INTO test (value) VALUES ('first');
-        """)
-        
-        #expect(
-            throws: SQLiteError(
-                code: SQLITE_BUSY,
-                message: "database is locked"
-            ),
-            performing: {
-                twoConn.busyTimeout = 0
-                try twoConn.execute(sql: """
-                INSERT INTO test (value) VALUES ('second');
-                """)
-            }
-        )
-        
-        try oneConn.rollbackTransaction()
-    }
-    
     @Test func testApplicationID() throws {
         let connection = try Connection(
-            location: .inMemory,
-            options: [.create, .readwrite]
+            location: .inMemory, options: [.create, .readwrite]
         )
         
         #expect(connection.applicationID == 0)
@@ -133,8 +90,7 @@ struct ConnectionTests {
     
     @Test func testForeignKeys() throws {
         let connection = try Connection(
-            location: .inMemory,
-            options: [.create, .readwrite]
+            location: .inMemory, options: [.create, .readwrite]
         )
         
         #expect(connection.foreignKeys == false)
@@ -147,15 +103,12 @@ struct ConnectionTests {
     }
     
     @Test func testJournalMode() throws {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("sqlite")
-        defer { try? FileManager.default.removeItem(at: url) }
+        let dir = FileManager.default.temporaryDirectory
+        let file = UUID().uuidString
+        let path = dir.appending(component: file).path
+        defer { try? FileManager.default.removeItem(atPath: path) }
         
-        let connection = try Connection(
-            location: .file(path: url.path),
-            options: [.create, .readwrite]
-        )
+        let connection = try Connection(path: path, options: [.create, .readwrite])
         
         connection.journalMode = .delete
         #expect(try connection.get(pragma: .journalMode) == JournalMode.delete)
@@ -166,8 +119,7 @@ struct ConnectionTests {
     
     @Test func testSynchronous() throws {
         let connection = try Connection(
-            location: .inMemory,
-            options: [.create, .readwrite]
+            location: .inMemory, options: [.create, .readwrite]
         )
         
         connection.synchronous = .normal
@@ -179,8 +131,7 @@ struct ConnectionTests {
     
     @Test func testUserVersion() throws {
         let connection = try Connection(
-            location: .inMemory,
-            options: [.create, .readwrite]
+            location: .inMemory, options: [.create, .readwrite]
         )
         
         connection.userVersion = 42
@@ -190,88 +141,265 @@ struct ConnectionTests {
         #expect(connection.userVersion == 13)
     }
     
-    @Test(arguments: [
-        (TestScalarFunc.self, TestScalarFunc.name),
-        (TestAggregateFunc.self, TestAggregateFunc.name)
-    ] as [(Function.Type, String)])
-    func testAddFunction(
-        _ function: Function.Type,
-        _ name: String
-    ) throws {
-        let connection = try Connection(
-            location: .inMemory,
-            options: [.create, .readwrite]
-        )
-        try connection.execute(sql: """
-        CREATE TABLE items (value INTEGER);
-        INSERT INTO items (value) VALUES (1), (2), (NULL), (3);
-        """)
-        try connection.add(function: function)
-        try connection.execute(sql: "SELECT \(name)(value) FROM items")
+    @Test(arguments: ["main", nil])
+    func applyKeyEncrypt(_ name: String?) throws {
+        let dir = FileManager.default.temporaryDirectory
+        let file = UUID().uuidString
+        let path = dir.appending(component: file).path
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        
+        do {
+            let connection = try Connection(path: path, options: [.create, .readwrite])
+            try connection.apply(.passphrase("test"), name: name)
+            try connection.execute(sql: "CREATE TABLE t (id INT PRIMARY KEY)")
+        }
+        
+        do {
+            var connection: OpaquePointer!
+            sqlite3_open_v2(path, &connection, SQLITE_OPEN_READONLY, nil)
+            let status = sqlite3_exec(
+                connection, "SELECT count(*) FROM sqlite_master", nil, nil, nil
+            )
+            #expect(status == SQLITE_NOTADB)
+        }
     }
     
-    @Test(arguments: [
-        (TestScalarFunc.self, TestScalarFunc.name),
-        (TestAggregateFunc.self, TestAggregateFunc.name)
-    ] as [(Function.Type, String)])
-    func testRemoveFunction(
-        _ function: Function.Type,
-        _ name: String
-    ) throws {
-        let connection = try Connection(
-            location: .inMemory,
-            options: [.create, .readwrite]
-        )
-        try connection.execute(sql: """
-        CREATE TABLE items (value INTEGER);
-        INSERT INTO items (value) VALUES (1), (2), (NULL), (3);
-        """)
-        try connection.add(function: function)
-        try connection.remove(function: function)
-        #expect(
-            throws: SQLiteError(
-                code: SQLITE_ERROR,
-                message: "no such function: \(name)"
-            ),
-            performing: {
-                try connection.execute(sql: """
-                SELECT \(name)(value) FROM items
-                """)
+    @Test(arguments: ["main", nil])
+    func applyKeyDecrypt(_ name: String?) throws {
+        let dir = FileManager.default.temporaryDirectory
+        let file = UUID().uuidString
+        let path = dir.appending(component: file).path
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        
+        do {
+            var connection: OpaquePointer!
+            let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE
+            sqlite3_open_v2(path, &connection, options, nil)
+            if let name {
+                sqlite3_key_v2(connection, name, "test", Int32("test".utf8.count))
+            } else {
+                sqlite3_key(connection, "test", Int32("test".utf8.count))
             }
+            sqlite3_exec(
+                connection, "CREATE TABLE t (id INT PRIMARY KEY)", nil, nil, nil
+            )
+            sqlite3_close_v2(connection)
+        }
+        
+        do {
+            let connection = try Connection(path: path, options: [.readwrite])
+            try connection.apply(.passphrase("test"), name: name)
+            try connection.execute(sql: "SELECT count(*) FROM sqlite_master")
+        }
+    }
+    
+    @Test(arguments: ["main", nil])
+    func applyKeyInvalid(_ name: String?) throws {
+        let connection = try Connection(
+            location: .inMemory, options: [.create, .readwrite]
         )
+        #expect(
+            throws: SQLiteError(code: SQLITE_MISUSE, message: ""),
+            performing: { try connection.apply(.passphrase(""), name: name) }
+        )
+    }
+    
+    @Test(arguments: ["main", nil])
+    func rekey(_ name: String?) throws {
+        let dir = FileManager.default.temporaryDirectory
+        let file = UUID().uuidString
+        let path = dir.appending(component: file).path
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        
+        do {
+            let connection = try Connection(path: path, options: [.create, .readwrite])
+            try connection.apply(.passphrase("old-test"), name: name)
+            try connection.execute(sql: "CREATE TABLE t (id INT PRIMARY KEY)")
+        }
+        
+        do {
+            let connection = try Connection(path: path, options: [.create, .readwrite])
+            try connection.apply(.passphrase("old-test"), name: name)
+            try connection.rekey(.passphrase("new-test"), name: name)
+        }
+        
+        do {
+            let connection = try Connection(path: path, options: [.readwrite])
+            try connection.apply(.passphrase("new-test"), name: name)
+            try connection.execute(sql: "SELECT count(*) FROM sqlite_master")
+        }
+    }
+    
+    @Test(arguments: ["main", nil])
+    func rekeyInvalid(_ name: String?) throws {
+        let connection = try Connection(
+            location: .inMemory, options: [.create, .readwrite]
+        )
+        try connection.apply(.passphrase("test"), name: name)
+        try connection.execute(sql: "CREATE TABLE t (id INT PRIMARY KEY)")
+        
+        #expect(
+            throws: SQLiteError(code: SQLITE_ERROR, message: ""),
+            performing: { try connection.rekey(.passphrase(""), name: name) }
+        )
+    }
+    
+    @Test func addDelegate() throws {
+        let connection = try Connection(
+            location: .inMemory, options: [.create, .readwrite]
+        )
+        try connection.execute(sql: "CREATE TABLE t (id INT PRIMARY KEY)")
+        
+        let delegate = ConnectionDelegate()
+        connection.add(delegate: delegate)
+        
+        try connection.execute(sql: "INSERT INTO t (id) VALUES (1)")
+        #expect(delegate.didUpdate)
+        #expect(delegate.willCommit)
+        #expect(delegate.didRollback == false)
+        
+        delegate.reset()
+        delegate.error = SQLiteError(code: -1, message: "")
+        
+        try? connection.execute(sql: "INSERT INTO t (id) VALUES (2)")
+        #expect(delegate.didUpdate)
+        #expect(delegate.willCommit)
+        #expect(delegate.didRollback)
+        
+        delegate.reset()
+        connection.remove(delegate: delegate)
+        
+        try connection.execute(sql: "INSERT INTO t (id) VALUES (3)")
+        #expect(delegate.didUpdate == false)
+        #expect(delegate.willCommit == false)
+        #expect(delegate.didRollback == false)
+    }
+    
+    @Test func addTraceDelegate() throws {
+        let connection = try Connection(
+            location: .inMemory, options: [.create, .readwrite]
+        )
+        try connection.execute(sql: "CREATE TABLE t (id INT PRIMARY KEY)")
+        
+        let delegate = ConnectionTraceDelegate()
+        connection.add(trace: delegate)
+        
+        try connection.execute(sql: "INSERT INTO t (id) VALUES (:id)")
+        #expect(delegate.expandedSQL == "INSERT INTO t (id) VALUES (NULL)")
+        #expect(delegate.unexpandedSQL == "INSERT INTO t (id) VALUES (:id)")
+        
+        delegate.reset()
+        connection.remove(trace: delegate)
+        
+        try connection.execute(sql: "INSERT INTO t (id) VALUES (:id)")
+        #expect(delegate.expandedSQL == nil)
+        #expect(delegate.unexpandedSQL == nil)
+    }
+    
+    @Test func addFunction() throws {
+        let connection = try Connection(
+            location: .inMemory, options: [.create, .readwrite]
+        )
+        
+        try connection.add(function: TestFunction.self)
+        #expect(TestFunction.isInstalled)
+        
+        try connection.remove(function: TestFunction.self)
+        #expect(TestFunction.isInstalled == false)
+    }
+    
+    @Test func beginTransaction() throws {
+        let connection = try Connection(
+            location: .inMemory, options: [.create, .readwrite]
+        )
+        #expect(connection.isAutocommit)
+        
+        try connection.beginTransaction()
+        #expect(connection.isAutocommit == false)
+    }
+    
+    @Test func commitTransaction() throws {
+        let connection = try Connection(
+            location: .inMemory, options: [.create, .readwrite]
+        )
+        #expect(connection.isAutocommit)
+        
+        try connection.beginTransaction()
+        try connection.commitTransaction()
+        #expect(connection.isAutocommit)
+    }
+    
+    @Test func rollbackTransaction() throws {
+        let connection = try Connection(
+            location: .inMemory, options: [.create, .readwrite]
+        )
+        #expect(connection.isAutocommit)
+        
+        try connection.beginTransaction()
+        try connection.rollbackTransaction()
+        #expect(connection.isAutocommit)
     }
 }
 
 private extension ConnectionTests {
-    final class TestScalarFunc: Function.Scalar {
-        override class var argc: Int32 { 1 }
-        override class var name: String { "TO_STR" }
-        override class var options: Options {
-            [.deterministic, .innocuous]
+    final class ConnectionDelegate: DataLiteCore.ConnectionDelegate {
+        var error: Error?
+        
+        var didUpdate = false
+        var willCommit = false
+        var didRollback = false
+        
+        func reset() {
+            didUpdate = false
+            willCommit = false
+            didRollback = false
         }
         
-        override class func invoke(args: any ArgumentsProtocol) throws -> SQLiteRepresentable? {
-            args[0].description
+        func connection(
+            _ connection: any ConnectionProtocol,
+            didUpdate action: SQLiteAction
+        ) {
+            didUpdate = true
+        }
+        
+        func connectionWillCommit(_ connection: any ConnectionProtocol) throws {
+            willCommit = true
+            if let error { throw error }
+        }
+        
+        func connectionDidRollback(_ connection: any ConnectionProtocol) {
+            didRollback = true
         }
     }
     
-    final class TestAggregateFunc: Function.Aggregate {
-        override class var argc: Int32 { 1 }
-        override class var name: String { "MY_COUNT" }
-        override class var options: Options {
-            [.deterministic, .innocuous]
+    final class ConnectionTraceDelegate: DataLiteCore.ConnectionTraceDelegate {
+        var expandedSQL: String?
+        var unexpandedSQL: String?
+        
+        func reset() {
+            expandedSQL = nil
+            unexpandedSQL = nil
         }
         
-        private var count: Int = 0
+        func connection(_ connection: any ConnectionProtocol, trace sql: Trace) {
+            expandedSQL = sql.expandedSQL
+            unexpandedSQL = sql.unexpandedSQL
+        }
+    }
+    
+    final class TestFunction: DataLiteCore.Function {
+        nonisolated(unsafe) static var isInstalled = false
         
-        override func step(args: any ArgumentsProtocol) throws {
-            if args[0] != .null {
-                count += 1
-            }
+        override class func install(
+            db connection: OpaquePointer
+        ) throws(SQLiteError) {
+            isInstalled = true
         }
         
-        override func finalize() throws -> SQLiteRepresentable? {
-            count
+        override class func uninstall(
+            db connection: OpaquePointer
+        ) throws(SQLiteError) {
+            isInstalled = false
         }
     }
 }

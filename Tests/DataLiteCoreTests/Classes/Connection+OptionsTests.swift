@@ -3,40 +3,40 @@ import DataLiteC
 import DataLiteCore
 
 struct ConnectionOptionsTests {
-    @Test func testReadOnlyOption() {
+    @Test func readOnlyOption() {
         let options: Connection.Options = [.readonly]
         #expect(options.contains(.readonly))
     }
     
-    @Test func testReadWriteOption() {
+    @Test func readWriteOption() {
         let options: Connection.Options = [.readwrite]
         #expect(options.contains(.readwrite))
     }
     
-    @Test func testCreateOption() {
+    @Test func createOption() {
         let options: Connection.Options = [.create]
         #expect(options.contains(.create))
     }
     
-    @Test func testMultipleOptions() {
+    @Test func multipleOptions() {
         let options: Connection.Options = [.readwrite, .create, .memory]
         #expect(options.contains(.readwrite))
         #expect(options.contains(.create))
         #expect(options.contains(.memory))
     }
     
-    @Test func testNoFollowOption() {
+    @Test func noFollowOption() {
         let options: Connection.Options = [.nofollow]
         #expect(options.contains(.nofollow))
     }
     
-    @Test func testAllOptions() {
+    @Test func allOptions() {
         let options: Connection.Options = [
             .readonly, .readwrite, .create, .uri, .memory,
             .nomutex, .fullmutex, .sharedcache,
             .privatecache, .exrescode, .nofollow
         ]
-        
+
         #expect(options.contains(.readonly))
         #expect(options.contains(.readwrite))
         #expect(options.contains(.create))
@@ -50,7 +50,7 @@ struct ConnectionOptionsTests {
         #expect(options.contains(.nofollow))
     }
     
-    @Test func testOptionsRawValue() {
+    @Test func optionsRawValue() {
         let options: Connection.Options = [.readwrite, .create]
         let expectedRawValue = Int32(SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE)
         #expect(options.rawValue == expectedRawValue)
