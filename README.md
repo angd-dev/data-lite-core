@@ -22,8 +22,6 @@ DataLiteCore provides an object-oriented API over the C interface, allowing deve
 
 To add DataLiteCore to your project, use Swift Package Manager (SPM).
 
-> **Important:** The API of `DataLiteCore` is currently unstable and may change without notice. It is **strongly recommended** to pin the dependency to a specific commit to ensure compatibility and avoid unexpected breakage when the API evolves.
-
 ### Adding to an Xcode Project
 
 1. Open your project in Xcode.
@@ -43,7 +41,7 @@ import PackageDescription
 let package = Package(
     name: "YourProject",
     dependencies: [
-        .package(url: "https://github.com/angd-dev/data-lite-core.git", branch: "develop")
+        .package(url: "https://github.com/angd-dev/data-lite-core.git", from: "1.0.0")
     ],
     targets: [
         .target(
@@ -58,7 +56,7 @@ let package = Package(
 
 ## Additional Resources
 
-For more information and usage examples, see the [documentation](https://docs.angd.dev/?package=data-lite-core&version=develop).
+For more information and usage examples, see the [documentation](https://docs.angd.dev/?package=data-lite-core&version=1.0.0).
 
 ## License
 
