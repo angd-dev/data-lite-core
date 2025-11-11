@@ -12,6 +12,8 @@ import Foundation
 ///
 /// - ``isAutocommit``
 /// - ``isReadonly``
+/// - ``changes``
+/// - ``totalChanges``
 ///
 /// ### Accessing PRAGMA Values
 ///
@@ -83,6 +85,14 @@ public protocol ConnectionProtocol: AnyObject {
     /// - Returns: `true` if the connection is read-only; otherwise, `false`.
     /// - SeeAlso: [Determine if a database is read-only](https://sqlite.org/c3ref/db_readonly.html)
     var isReadonly: Bool { get }
+    
+    /// The number of rows modified by the most recent write operation.
+    /// - SeeAlso: [Count The Number Of Rows Modified](https://sqlite.org/c3ref/changes.html)
+    var changes: Int64 { get }
+    
+    /// The total number of rows modified since this connection was opened.
+    /// - SeeAlso: [Total Number Of Rows Modified](https://sqlite.org/c3ref/total_changes.html)
+    var totalChanges: Int64 { get }
     
     // MARK: - PRAGMA Accessors
     
