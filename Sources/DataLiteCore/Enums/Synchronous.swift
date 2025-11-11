@@ -6,7 +6,7 @@ import Foundation
 /// disk. It defines the balance between durability, consistency, and performance during commits.
 ///
 /// - SeeAlso: [PRAGMA synchronous](https://sqlite.org/pragma.html#pragma_synchronous)
-public enum Synchronous: UInt8, SQLiteRepresentable {
+public enum Synchronous: UInt8, SQLiteRepresentable, Sendable {
     /// Disables synchronization for maximum performance.
     ///
     /// With `synchronous=OFF`, SQLite does not wait for data to reach non-volatile storage before

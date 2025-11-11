@@ -7,7 +7,7 @@ import Foundation
 /// as the database name, table, and affected row ID.
 ///
 /// - SeeAlso: [Data Change Notification Callbacks](https://sqlite.org/c3ref/update_hook.html)
-public enum SQLiteAction {
+public enum SQLiteAction: Hashable, Sendable {
     /// A new row was inserted into a table.
     ///
     /// - Parameters:

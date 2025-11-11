@@ -7,7 +7,7 @@ extension Connection {
     /// Two formats are supported:
     /// - a passphrase, which undergoes key derivation;
     /// - a raw 256-bit key (32 bytes) passed without transformation.
-    public enum Key {
+    public enum Key: Sendable {
         /// A human-readable passphrase used for key derivation.
         ///
         /// The passphrase is supplied as-is and processed by the underlying key derivation
