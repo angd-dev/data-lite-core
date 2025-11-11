@@ -131,6 +131,14 @@ extension Connection: ConnectionProtocol {
         sqlite3_db_readonly(connection, "main") == 1
     }
     
+    public var changes: Int64 {
+        sqlite3_changes64(connection)
+    }
+    
+    public var totalChanges: Int64 {
+        sqlite3_total_changes64(connection)
+    }
+    
     public static func initialize() throws(SQLiteError) {
         let status = sqlite3_initialize()
         guard status == SQLITE_OK else {
