@@ -6,7 +6,7 @@ import Foundation
 /// journal for rollback and recovery.
 ///
 /// - SeeAlso: [journal_mode](https://sqlite.org/pragma.html#pragma_journal_mode)
-public enum JournalMode: String, SQLiteRepresentable {
+public enum JournalMode: String, SQLiteRepresentable, Sendable {
     /// DELETE journal mode.
     ///
     /// This is the default behavior. The rollback journal is deleted at the conclusion of each

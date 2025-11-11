@@ -7,7 +7,7 @@ import Foundation
 /// during the transaction.
 ///
 /// - SeeAlso: [Transaction](https://sqlite.org/lang_transaction.html)
-public enum TransactionType: String, CustomStringConvertible {
+public enum TransactionType: String, CustomStringConvertible, Sendable {
     /// Defers the start of the transaction until the first database access.
     ///
     /// With `BEGIN DEFERRED`, no locks are acquired immediately. If the first statement is a read

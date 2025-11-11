@@ -63,6 +63,63 @@ struct ConnectionTests {
         #expect(connection.isReadonly == expected)
     }
     
+    @Test func changes() throws {
+        let connection = try Connection(
+            location: .inMemory, options: [.create, .readwrite]
+        )
+        
+        try connection.execute(sql: "CREATE TABLE t (id INT PRIMARY KEY)")
+        #expect(connection.changes == 0)
+        
+        try connection.execute(sql: "INSERT INTO t (id) VALUES (1),(2)")
+        #expect(connection.changes == 2)
+        
+        try connection.execute(sql: "UPDATE t SET id = 3 WHERE id = 1")
+        #expect(connection.changes == 1)
+        
+        try connection.execute(sql: "DELETE FROM t WHERE id = 2")
+        #expect(connection.changes == 1)
+        
+        try connection.execute(sql: "UPDATE t SET id = 3 WHERE id = -1")
+        #expect(connection.changes == 0)
+        
+        try connection.execute(sql: "INSERT INTO t (id) VALUES (4),(5)")
+        try connection.execute(sql: "SELECT * FROM t")
+        #expect(connection.changes == 2)
+    }
+    
+    @Test func totalChanges() throws {
+        let connection = try Connection(
+            location: .inMemory, options: [.create, .readwrite]
+        )
+        
+        try connection.execute(sql: "CREATE TABLE t (id INT PRIMARY KEY)")
+        #expect(connection.totalChanges == 0)
+        
+        try connection.execute(sql: "INSERT INTO t (id) VALUES (1),(2)")
+        #expect(connection.totalChanges == 2)
+        
+        try connection.execute(sql: "UPDATE t SET id = 3 WHERE id = 1")
+        #expect(connection.totalChanges == 3)
+        
+        try connection.execute(sql: "DELETE FROM t WHERE id = 2")
+        #expect(connection.totalChanges == 4)
+        
+        // No-op update — does not increase totalChanges
+        try connection.execute(sql: "UPDATE t SET id = 3 WHERE id = -1")
+        #expect(connection.totalChanges == 4)
+        
+        // Read-only statements do not affect totals
+        try connection.execute(sql: "SELECT * FROM t")
+        #expect(connection.totalChanges == 4)
+        
+        try connection.execute(sql: "INSERT INTO t (id) VALUES (4),(5)")
+        #expect(connection.totalChanges == 6)
+        
+        try connection.execute(sql: "DELETE FROM t")
+        #expect(connection.totalChanges == 9)
+    }
+    
     @Test func testBusyTimeout() throws {
         let connection = try Connection(
             location: .inMemory, options: [.create, .readwrite]
