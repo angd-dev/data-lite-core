@@ -41,7 +41,7 @@ import PackageDescription
 let package = Package(
     name: "YourProject",
     dependencies: [
-        .package(url: "https://github.com/angd-dev/data-lite-core.git", from: "1.0.0")
+        .package(url: "https://github.com/angd-dev/data-lite-core.git", from: "1.1.0")
     ],
     targets: [
         .target(
@@ -56,7 +56,7 @@ let package = Package(
 
 ## Additional Resources
 
-For more information and usage examples, see the [documentation](https://docs.angd.dev/?package=data-lite-core&version=1.0.0).
+For more information and usage examples, see the [documentation](https://docs.angd.dev/?package=data-lite-core&version=1.1.0).
 
 ## License
 
